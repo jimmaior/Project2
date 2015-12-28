@@ -1,0 +1,132 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/colorPrimaryDark">
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="?attr/actionBarSize"
+                tools:context=".ui.DetailFragment"
+                tools:showIn="@layout/activity_detail">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_weight="1"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textStyle="bold"
+        android:id="@+id/tv_title"
+        tools:text="Ant-Man"
+        android:background="@color/colorPrimaryDark"
+        android:textColor="@color/colorAccent"
+        android:textAlignment="gravity"
+        android:gravity="center_vertical"
+        android:textSize="@dimen/abc_text_size_headline_material"
+        android:padding="16sp"/>
+
+    <LinearLayout
+        android:id="@+id/ll_detail_out"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:orientation="horizontal"
+        android:weightSum="1"
+        android:paddingLeft="4sp">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/iv_poster"
+            android:padding="4dp"
+            tools:src="@drawable/poster"
+            />
+
+        <LinearLayout
+            android:id="@+id/ll_detail_in"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/ll_release_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_release_date"
+                    android:padding="4dp"
+                    tools:text="Release date"
+                    android:textColor="#ffffff"
+                    android:textSize="@dimen/abc_text_size_caption_material"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="Large Text"
+                    android:padding="4dp"
+                    android:id="@+id/tv_release_date"
+                    tools:text="2015"
+                    android:textColor="@color/colorAccent"
+                    android:textSize="@dimen/abc_text_size_large_material"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_user_rating"
+                    android:padding="4dp"
+                    tools:text="Rating"
+                    android:textColor="#ffffff"
+                    android:textSize="@dimen/abc_text_size_caption_material"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="Large Text"
+                    android:padding="4dp"
+                    android:id="@+id/tv_user_rating"
+                    tools:text="8"
+                    android:textColor="@color/colorAccent"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/tv_user_rating_per"
+                    android:padding="4dp"
+                    android:text="/10"
+                    tools:text="/10"
+                    android:textColor="@color/colorAccent"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:text="Medium Text"
+        android:id="@+id/tv_overview"
+        tools:text="Armed with the astonishing ability to shrink in scale but increase in strength, con-man Scott Lang must embrace his inner-hero and help his mentor, Dr. Hank Pym, protect the secret behind his spectacular Ant-Man suit from a new generation of towering threats. Against seemingly insurmountable obstacles, Pym and Lang must plan and pull off a heist that will save the world."
+        android:textColor="#ffffff"
+        android:padding="4dp"/>
+
+</LinearLayout>
+
+</ScrollView>

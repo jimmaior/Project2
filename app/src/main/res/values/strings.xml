@@ -1,0 +1,16 @@
+<resources>
+    <!-- app titles -->
+    <string name="app_name">Popular Movies</string>
+
+    <!--  Settings -->
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_detail">Movie Details</string>
+    <string name="pref_sort">Sort order</string>
+    <string name="pref_sort_default">POPULARITY</string>
+    <string name="pref_sort_summary">Sort in descending order by popularity or by user rating</string>
+
+    <!-- Detail Fragment-->
+    <string name="label_release_date">Released in</string>
+    <string name="label_user_rating">Rating</string>
+
+</resources>
