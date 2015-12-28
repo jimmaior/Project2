@@ -1,9 +1,8 @@
-package me.jimm.popularmovies2.model;
+package me.jimm.popularmovies2.models;
 
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.annotation.IntegerRes;
 
 /**
  * Created by jimmaior on 11/30/15.
