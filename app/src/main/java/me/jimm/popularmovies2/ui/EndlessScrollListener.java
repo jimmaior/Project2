@@ -16,8 +16,8 @@ public abstract class EndlessScrollListener implements AbsListView.OnScrollListe
 
     private int mVisibleThreshold = 5;      // min number of item below scroll position before loading more
     private int mCurrentPage = 1;           // current page number of data loaded
-    private int mPreviousTotal = 0;   // item count in dataset after last load
-    private boolean mIsLoading = true;   // status while loading
+    private int mPreviousTotal = 0;         // item count in dataset after last load
+    private boolean mIsLoading = true;      // status while loading
 
 
     public EndlessScrollListener() {}

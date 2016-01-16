@@ -8,7 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.os.ResultReceiver;
 import android.util.Log;
 
-import me.jimm.popularmovies2.model.Movie;
+import me.jimm.popularmovies2.models.Movie;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

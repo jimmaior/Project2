@@ -11,21 +11,20 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import me.jimm.popularmovies2.R;
-import me.jimm.popularmovies2.model.Movie;
+import me.jimm.popularmovies2.models.Movie;
+import me.jimm.popularmovies2.presenters.MovieDetailPresenter;
+import me.jimm.popularmovies2.views.MovieDetailView;
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class DetailFragment extends Fragment {
+public class DetailFragment extends Fragment implements MovieDetailView {
 
     private static final String TAG = DetailFragment.class.getSimpleName();
+    private MovieDetailPresenter mMovieDetailPresenter;
 
     // members
-    private Movie mMovie;
     private TextView mTvTitle;
     private ImageView mIvPoster;
     private TextView mTvReleaseDate;
@@ -37,10 +36,14 @@ public class DetailFragment extends Fragment {
     }
 
     public void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
+
         Log.d(TAG, "onCreate");
         Bundle b = getArguments();
-        mMovie = b.getParcelable("movie");
+        Movie movie = b.getParcelable("movie");
+        mMovieDetailPresenter = new MovieDetailPresenter(movie);
+        mMovieDetailPresenter.setView(this);
 
     }
 
@@ -51,49 +54,43 @@ public class DetailFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_detail, container, false);
 
         mTvTitle = (TextView) v.findViewById(R.id.tv_title);
-        mTvTitle.setText(mMovie.getTitle());
-
         mIvPoster = (ImageView) v.findViewById(R.id.iv_poster);
-        Picasso.with(getActivity())
-                .load(mMovie.getPosterPath())
-                .into(mIvPoster);
-
         mTvReleaseDate = (TextView) v.findViewById(R.id.tv_release_date);
-        mTvReleaseDate.setText(formatReleaseDate(mMovie.getReleaseDate()));
-
         mTvRating = (TextView) v.findViewById(R.id.tv_user_rating);
-        mTvRating.setText(formatRating(mMovie.getUserRating()));
-
         mTvOverview = (TextView) v.findViewById(R.id.tv_overview);
-        mTvOverview.setText(mMovie.getOverview());
 
+        mMovieDetailPresenter.loadMovieDetails();
         return v;
     }
 
-    // private methods
-    /**
-     * converts the user ratings provided by the API as a double
-     * into a single digit formatted as a string
-     * */
-    private String formatRating(double rating) {
-        String formattedRating;
-        formattedRating = Long.toString(Math.round(rating));
-        return formattedRating;
+    @Override
+    public void showMovieTitle() {
+        mTvTitle.setText(mMovieDetailPresenter.getMovieTitle());
     }
 
-    /**
-     * converts a string date in the form of yyyy-mm-dd to yyyy
-     * */
-    private String formatReleaseDate(String sDate) {
-        String year = null;
-        SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
-        try {
-            Date date = yearFormat.parse(sDate);
-            year = yearFormat.format(date);
+    @Override
+    public void showPoster(){
 
-        } catch (java.text.ParseException pe) {
-            Log.e(TAG, pe.getMessage());
-        }
-        return year;
+        Picasso.with(getActivity())
+                .load(mMovieDetailPresenter.getPosterPath())
+                .into(mIvPoster);
     }
+
+    @Override
+    public void showReleaseDate(){
+        mTvReleaseDate.setText(mMovieDetailPresenter.getReleaseDate());
+    }
+
+    @Override
+    public void showRating(){
+        mTvRating.setText(mMovieDetailPresenter.getRating());
+    }
+
+    @Override
+    public void showOverview(){
+        mTvOverview.setText(mMovieDetailPresenter.getOverview());
+    }
+
+
+
 }
