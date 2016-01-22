@@ -1,9 +1,7 @@
 package me.jimm.popularmovies2.presenters;
 
-import java.lang.ref.WeakReference;
-
 /**
- * Created by generaluser on 12/31/15.
+ * Created by jimmaior on 12/31/15.
  */
 public abstract class BasePresenter<M, V> {
     protected M mModel;

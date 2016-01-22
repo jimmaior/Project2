@@ -1,4 +1,4 @@
-package me.jimm.popularmovies2;
+package me.jimm.popularmovies2.models;
 
 import android.app.IntentService;
 import android.content.Intent;
@@ -8,7 +8,8 @@ import android.support.annotation.Nullable;
 import android.support.v4.os.ResultReceiver;
 import android.util.Log;
 
-import me.jimm.popularmovies2.models.Movie;
+import me.jimm.popularmovies2.BuildConfig;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,7 +23,7 @@ import java.net.URL;
 import java.util.ArrayList;
 
 
-public class MovieDbApiService extends IntentService {
+public class MovieService extends IntentService {
 
     // public members
     public static final int STATUS_RUNNING = 100;
@@ -33,7 +34,7 @@ public class MovieDbApiService extends IntentService {
 
 
     // private members
-    private static final String TAG = MovieDbApiService.class.getSimpleName();
+    private static final String TAG = MovieService.class.getSimpleName();
 
     // JSON fields
     private static final String MOVIE_API_RESULTS = "results";
@@ -58,7 +59,7 @@ public class MovieDbApiService extends IntentService {
 
 
 
-    public MovieDbApiService() {
+    public MovieService() {
         super("MovieService");
     }
 

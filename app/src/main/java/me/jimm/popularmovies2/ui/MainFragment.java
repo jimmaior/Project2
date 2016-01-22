@@ -1,8 +1,11 @@
 package me.jimm.popularmovies2.ui;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +17,7 @@ import java.util.ArrayList;
 import me.jimm.popularmovies2.MovieListAdapter;
 import me.jimm.popularmovies2.PresenterManager;
 import me.jimm.popularmovies2.R;
+import me.jimm.popularmovies2.data.MovieContract;
 import me.jimm.popularmovies2.models.Movie;
 import me.jimm.popularmovies2.presenters.MovieListPresenter;
 import me.jimm.popularmovies2.views.MovieListView;
@@ -21,19 +25,65 @@ import me.jimm.popularmovies2.views.MovieListView;
 
 public class MainFragment extends Fragment implements
         MovieListView,
-        AdapterView.OnItemClickListener{
+        AdapterView.OnItemClickListener,
+        LoaderManager.LoaderCallbacks<Cursor>{
 
     private MovieListPresenter mMovieListPresenter;
    // private PresenterManager mPresenterManager;
     private static final String TAG = MainFragment.class.getSimpleName();
 
+    private static int MOVIE_LOADER = 1;
     private GridView mGridView;
     private MovieListAdapter mMovieListAdapter;
     private ProgressBar mProgressBar;
 
+    private static final String[] MOVIE_COLUMNS  = {
+            // TODO: modify these comments and determine if they are still relevant
+            // In this case the id needs to be fully qualified with a table name, since
+            // the content provider joins the location & weather tables in the background
+            // (both have an _id column)
+            // On the one hand, that's annoying.  On the other, you can search the weather table
+            // using the location set by the user, which is only in the Location table.
+            // So the convenience is worth it.
+            MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry._ID,
+            MovieContract.MovieEntry.COLUMN_FAVORITE,
+            MovieContract.MovieEntry.COLUMN_FK_REVIEW_KEY,
+            MovieContract.MovieEntry.COLUMN_FK_VIDEO_KEY,
+            MovieContract.MovieEntry.COLUMN_MOVIE_ID,
+            MovieContract.MovieEntry.COLUMN_OVERVIEW,
+            MovieContract.MovieEntry.COLUMN_POSTER_URL,
+            MovieContract.MovieEntry.COLUMN_RELEASE_DATE,
+            MovieContract.MovieEntry.COLUMN_TITLE,
+            MovieContract.MovieEntry.COLUMN_USER_RATING,
+    };
+
+    // these indices are tied to FORECAST_COLUMNS.
+    // If FORECAST_COLUMNS changes, these must change too
+    static final int COL__ID = 0;
+    static final int COL_FAVORITE = 1;
+    static final int COL_FK_REVIEW_KEY = 2;
+    static final int COL_FK_VIDEO_KEY = 3;
+    static final int COL_MOVIE_ID = 4;
+    static final int COL_OVERVIEW = 5;
+    static final int COL_POSTER_URL = 6;
+    static final int COL_RELEASE_DATE = 7;
+    static final int COL_TITLE = 8;
+    static final int COL_USER_RATING = 9;
+
+
+
     public MainFragment() {
         // Required empty public constructor
     }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        // prepare the CursorLoader
+        getLoaderManager().initLoader(MOVIE_LOADER, null, this);
+    }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -119,7 +169,7 @@ public class MainFragment extends Fragment implements
         super.onPause();
         mMovieListPresenter.unbindView();
         Log.d(TAG, "onPause" +
-                "; mCurrentSortOrder=" + mMovieListPresenter.getCurrentSortOrder()+
+                "; mCurrentSortOrder=" + mMovieListPresenter.getCurrentSortOrder() +
                 "; getSortOrderPreference()=" + mMovieListPresenter.getCurrentSortOrderPreference());
 
     }
@@ -130,7 +180,7 @@ public class MainFragment extends Fragment implements
         mMovieListPresenter.bindView(this);
 
         Log.d(TAG, "onResume" +
-                "; mCurrentSortOrder=" + mMovieListPresenter.getCurrentSortOrder()+
+                "; mCurrentSortOrder=" + mMovieListPresenter.getCurrentSortOrder() +
                 "; getSortOrderPreference()=" + mMovieListPresenter.getCurrentSortOrderPreference());
         mMovieListPresenter.updateView();
     }
@@ -150,6 +200,18 @@ public class MainFragment extends Fragment implements
         Intent intent = new Intent(getActivity(), DetailActivity.class);
         intent.putExtra("movie", movie);
         startActivity(intent);
+    }
+
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return null;
+    }
+
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        // mMovieListAdapter.swapCursor(data);
+    }
+
+    public void onLoaderReset(Loader<Cursor> loader) {
+        // mMovieListAdapter.swapCursor(null);
     }
 
 }

@@ -6,8 +6,12 @@ package me.jimm.popularmovies2.views;
 public interface MovieDetailView {
 
     void showMovieTitle();
+
     void showPoster();
+
     void showReleaseDate();
+
     void showRating();
+
     void showOverview();
 }

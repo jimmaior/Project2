@@ -32,7 +32,7 @@
         </activity>
 
         <service
-            android:name=".MovieDbApiService"
+            android:name=".models.MovieService"
             android:exported="false" >
         </service>
 

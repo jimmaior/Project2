@@ -58,6 +58,7 @@ public class MovieListAdapter extends BaseAdapter{
     public View getView(int position, View convertView, ViewGroup parent) {
 
         Movie movie = getItem(position);
+        Log.d(TAG, "movie_id=" + movie.getMovieId());
 
         ImageView imageView;
         if (convertView == null) {

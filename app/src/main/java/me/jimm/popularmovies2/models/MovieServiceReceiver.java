@@ -1,4 +1,4 @@
-package me.jimm.popularmovies2;
+package me.jimm.popularmovies2.models;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -8,16 +8,16 @@ import android.util.Log;
 /**
  * Created by jimmaior on 12/10/15.
  */
-public class MovieDbApiResponseReceiver extends ResultReceiver {
+public class MovieServiceReceiver extends ResultReceiver {
 
-    private static final String TAG = MovieDbApiResponseReceiver.class.getSimpleName();
+    private static final String TAG = MovieServiceReceiver.class.getSimpleName();
 
     private Receiver mReceiver;
 
     public interface Receiver {
         public void onReceiveResponse(int resultCode, Bundle data) ;
     }
-    public MovieDbApiResponseReceiver(Handler handler) {
+    public MovieServiceReceiver(Handler handler) {
         super(handler);
         Log.d(TAG, "MovieDbApiResponseReceiver");
     }

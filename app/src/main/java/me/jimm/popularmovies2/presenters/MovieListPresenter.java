@@ -10,8 +10,8 @@ import android.util.Log;
 
 import java.util.ArrayList;
 
-import me.jimm.popularmovies2.MovieDbApiResponseReceiver;
-import me.jimm.popularmovies2.MovieDbApiService;
+import me.jimm.popularmovies2.models.MovieServiceReceiver;
+import me.jimm.popularmovies2.models.MovieService;
 import me.jimm.popularmovies2.R;
 import me.jimm.popularmovies2.models.Movie;
 import me.jimm.popularmovies2.models.MovieDataManager;
@@ -21,7 +21,7 @@ import me.jimm.popularmovies2.views.MovieListView;
  * Created by generaluser on 12/29/15.
  */
 public class MovieListPresenter extends BasePresenter implements
-        MovieDbApiResponseReceiver.Receiver {
+        MovieServiceReceiver.Receiver {
 
     // public Flags
     private static final String SAVED_MOVIE_LIST = "movie_list";
@@ -120,10 +120,10 @@ public class MovieListPresenter extends BasePresenter implements
         Log.d(TAG, "fetchMovieData");
         // start the service to interact with the MovieDB API
         // set a reference to the API Request response handler
-        MovieDbApiResponseReceiver receiver = new MovieDbApiResponseReceiver(new Handler());
+        MovieServiceReceiver receiver = new MovieServiceReceiver(new Handler());
         receiver.setReceiver(this);
 
-        final Intent intent = new Intent(ACTION_GET_MOVIE_DATA, null, mContext, MovieDbApiService.class);
+        final Intent intent = new Intent(ACTION_GET_MOVIE_DATA, null, mContext, MovieService.class);
         intent.putExtra("receiver", receiver);
         intent.putExtra("page", mLastPage);
         intent.putExtra("sort_by", mCurrentSortOrder);
@@ -134,10 +134,10 @@ public class MovieListPresenter extends BasePresenter implements
     public void onReceiveResponse(int resultCode, Bundle resultData) {
         Log.d(TAG, "onReceiveResponse - ResultCode:" + resultCode);
         switch (resultCode) {
-            case MovieDbApiService.STATUS_RUNNING:
+            case MovieService.STATUS_RUNNING:
                 mMovieListView.showLoading(true);
                 break;
-            case MovieDbApiService.STATUS_FINISHED:
+            case MovieService.STATUS_FINISHED:
                 Log.d(TAG, "MovieDbApiService finished");
                 ArrayList<Movie> m = resultData.getParcelableArrayList("results");
                 mMovies.addAll(m);
@@ -145,7 +145,7 @@ public class MovieListPresenter extends BasePresenter implements
                 loadData();
                 mMovieListView.showLoading(false);
                 break;
-            case MovieDbApiService.STATUS_ERROR:
+            case MovieService.STATUS_ERROR:
                 Log.e(TAG, resultData.getString(Intent.EXTRA_TEXT));
                 Log.e(TAG, "Error occurred while retrieving movie data. " +
                         resultData.get(Intent.EXTRA_TEXT));
@@ -171,9 +171,9 @@ public class MovieListPresenter extends BasePresenter implements
         String defaultValue = mContext.getResources().getString(R.string.pref_sort_default);
         String sortOrder = prefs.getString(SORT_PREFERENCE, defaultValue);
         if (sortOrder.equals("POPULARITY"))  {
-            return MovieDbApiService.MOVIE_API_PARAM_SORT_BY_POPULARITY;
+            return MovieService.MOVIE_API_PARAM_SORT_BY_POPULARITY;
         } else if (sortOrder.equals("RATING")) {
-            return MovieDbApiService.MOVIE_API_PARAM_SORT_BY_RATING;
+            return MovieService.MOVIE_API_PARAM_SORT_BY_RATING;
         }
         else {
             Log.e(TAG, "Sort Order undefined: sortOrder='" + sortOrder + "'");
