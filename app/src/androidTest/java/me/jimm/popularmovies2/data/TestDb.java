@@ -29,7 +29,7 @@ public class TestDb extends AndroidTestCase {
 
         // build a HashSet of all of the table names
         // Note that there is another table in DB that stores Android metadata
-        final HashSet<String> tableNameHashSet = new HashSet<String>();
+        final HashSet<String> tableNameHashSet = new HashSet<>();
         tableNameHashSet.add(MovieContract.MovieEntry.TABLE_NAME);
         tableNameHashSet.add(MovieContract.MovieReview.TABLE_NAME);
         tableNameHashSet.add(MovieContract.MovieVideo.TABLE_NAME);
@@ -64,17 +64,18 @@ public class TestDb extends AndroidTestCase {
                 c.moveToFirst());
 
         // Build a HashSet of all of the column names we want to look for
-        final HashSet<String> movieColumnHashSet = new HashSet<String>();
+        final HashSet<String> movieColumnHashSet = new HashSet<>();
         movieColumnHashSet.add(MovieContract.MovieEntry._ID);
+        movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_BACKDROP_PATH);
         movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_FAVORITE);
-        movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_FK_REVIEW_KEY);
-        movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_FK_VIDEO_KEY);
         movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
         movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_OVERVIEW);
-        movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_POSTER_URL);
+        movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_POPULARITY);
+        movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_POSTER_PATH);
         movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_RELEASE_DATE);
-        movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_USER_RATING);
         movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_TITLE);
+        movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE);
+        movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_VOTE_COUNT);
 
         int movieTableColumnNameIndex = c.getColumnIndex("name");
         do {
@@ -95,12 +96,13 @@ public class TestDb extends AndroidTestCase {
                 c.moveToFirst());
 
         // Build a HashSet of all of the column names we want to look for
-        final HashSet<String> movieReviewColumnHashSet = new HashSet<String>();
+        final HashSet<String> movieReviewColumnHashSet = new HashSet<>();
         movieReviewColumnHashSet.add(MovieContract.MovieReview._ID);
         movieReviewColumnHashSet.add(MovieContract.MovieReview.COLUMN_AUTHOR);
         movieReviewColumnHashSet.add(MovieContract.MovieReview.COLUMN_CONTENT);
         movieReviewColumnHashSet.add(MovieContract.MovieReview.COLUMN_REVIEW_ID);
         movieReviewColumnHashSet.add(MovieContract.MovieReview.COLUMN_URL);
+        movieReviewColumnHashSet.add(MovieContract.MovieReview.COLUMN_MOVIE_ID);
 
         int movieReviewColumnNameIndex = c.getColumnIndex("name");
         do {
@@ -120,7 +122,7 @@ public class TestDb extends AndroidTestCase {
                 c.moveToFirst());
 
         // Build a HashSet of all of the column names we want to look for
-        final HashSet<String> movieVideoColumnHashSet = new HashSet<String>();
+        final HashSet<String> movieVideoColumnHashSet = new HashSet<>();
         movieVideoColumnHashSet.add(MovieContract.MovieVideo._ID);
         movieVideoColumnHashSet.add(MovieContract.MovieVideo.COLUMN_KEY);
         movieVideoColumnHashSet.add(MovieContract.MovieVideo.COLUMN_ISO_639_1);
@@ -129,6 +131,7 @@ public class TestDb extends AndroidTestCase {
         movieVideoColumnHashSet.add(MovieContract.MovieVideo.COLUMN_SIZE);
         movieVideoColumnHashSet.add(MovieContract.MovieVideo.COLUMN_TYPE);
         movieVideoColumnHashSet.add(MovieContract.MovieVideo.COLUMN_VIDEO_ID);
+        movieVideoColumnHashSet.add(MovieContract.MovieVideo.COLUMN_MOVIE_ID);
 
         int movieVideoColumnNameIndex = c.getColumnIndex("name");
         do {
@@ -156,7 +159,7 @@ public class TestDb extends AndroidTestCase {
 
             // Second Step: Create ContentValues of what you want to insert
             // (you can use the createNorthPoleLocationValues if you wish)
-            ContentValues testValues = TestUtilities.createMovieData(1L);
+            ContentValues testValues = TestUtilities.createMovieData();
 
             // Third Step: Insert ContentValues into database and get a row ID back
             long movieRowId;

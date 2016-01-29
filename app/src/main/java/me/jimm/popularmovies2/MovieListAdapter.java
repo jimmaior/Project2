@@ -1,6 +1,8 @@
 package me.jimm.popularmovies2;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.support.v4.widget.CursorAdapter;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,72 +20,41 @@ import me.jimm.popularmovies2.models.Movie;
 /**
  * Created by generaluser on 1/2/16.
  */
-public class MovieListAdapter extends BaseAdapter{
+public class MovieListAdapter extends CursorAdapter {
 
     private final String TAG = MovieListAdapter.class.getSimpleName();
     private Context mContext;
-    private List<Movie> mMovieList;
 
 
-    public MovieListAdapter(Context context, ArrayList movies) {
+    public MovieListAdapter(Context context, Cursor cursor, int flags) {
+        super (context, cursor, flags);
         Log.d(TAG, "MovieListAdapter");
         mContext = context;
-        if (mMovieList != null) {
-            mMovieList = new ArrayList<>();
-            mMovieList = movies;
-        } else {
-            mMovieList = movies;
-        }
-    }
-
-    public int getCount() {
-        return mMovieList.size();
-    }
-
-
-    public Movie getItem(int position){
-        if (mMovieList != null) {
-            return mMovieList.get(position);
-        }
-        else {
-            return null;
-        }
-    }
-
-    public long getItemId(int position) {
-        return mMovieList.get(position).getMovieId();
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-
-        Movie movie = getItem(position);
-        Log.d(TAG, "movie_id=" + movie.getMovieId());
-
-        ImageView imageView;
-        if (convertView == null) {
-            imageView = new ImageView(mContext);
-            imageView.setAdjustViewBounds(true);
-            imageView.setPadding(4, 4, 4, 4);
-        } else {
-            imageView = (ImageView) convertView;
-        }
-
-        // using a placeholder really make the app run much smoother
-        Picasso.with(mContext)
-                .load(movie.getPosterPath())
-                .placeholder(R.drawable.ic_photo_white_48dp)
-                .into(imageView);
-
-        return imageView;
+    public View newView(Context context, Cursor cursor, ViewGroup parent) {
+        return null;
     }
 
-    public void clearAll() {
-        mMovieList.clear();
-    }
-
-    public void add(Collection<Movie> movies) {
-        mMovieList.addAll(movies);
-        notifyDataSetChanged();
+    // this is where we fill in the view with the contents of the cursor
+    @Override
+    public void bindView(View view, Context context, Cursor cursor) {
+//
+//        ImageView imageView;
+//        if (convertView == null) {
+//            imageView = new ImageView(mContext);
+//            imageView.setAdjustViewBounds(true);
+//            imageView.setPadding(4, 4, 4, 4);
+//        } else {
+//            imageView = (ImageView) convertView;
+//        }
+//
+//        // using a placeholder really make the app run much smoother
+//        Picasso.with(mContext)
+//                .load(movie.getPosterPath())
+//                .placeholder(R.drawable.ic_photo_white_48dp)
+//                .into(imageView);
+//
     }
 }

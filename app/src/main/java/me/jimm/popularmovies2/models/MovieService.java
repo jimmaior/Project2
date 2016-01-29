@@ -32,19 +32,20 @@ public class MovieService extends IntentService {
     public static final String MOVIE_API_PARAM_SORT_BY_POPULARITY = "popularity.desc";
     public static final String MOVIE_API_PARAM_SORT_BY_RATING = "vote_average.desc";
 
-
     // private members
     private static final String TAG = MovieService.class.getSimpleName();
 
     // JSON fields
     private static final String MOVIE_API_RESULTS = "results";
-    private static final String MOVIE_API_RESULTS_ID = "id";
-    private static final String MOVIE_API_RESULTS_POPULARITY = "popularity";
-    private static final String MOVIE_API_RESULTS_TITLE = "original_title";
-    private static final String MOVIE_API_RESULTS_RELEASE_DATE = "release_date";
-    private static final String MOVIE_API_RESULTS_RATING = "vote_average";
-    private static final String MOVIE_API_RESULTS_PLOT = "overview";
-    private static final String MOVIE_API_RESULTS_POSTER_PATH = "poster_path";
+    private static final String MOVIE_API_BACKDROP_PATH = "backdrop_path";
+    private static final String MOVIE_API_MOVIE_ID = "id";
+    private static final String MOVIE_API_OVERVIEW = "overview";
+    private static final String MOVIE_API_POPULARITY = "popularity";
+    private static final String MOVIE_API_POSTER_PATH = "poster_path";
+    private static final String MOVIE_API_RELEASE_DATE = "release_date";
+    private static final String MOVIE_API_TITLE = "title";
+    private static final String MOVIE_API_VOTER_AVERAGE = "vote_average";
+    private static final String MOVIE_API_VOTER_COUNT = "vote_count";
 
 
     // API Parameters ////////////////////////////////////////////////////////
@@ -76,10 +77,11 @@ public class MovieService extends IntentService {
         String command = intent.getStringExtra("command");
         Bundle bundle = new Bundle();
         if (command.equals("get_movie_data")) {
-            receiver.send(STATUS_RUNNING, bundle.EMPTY);
+            //receiver.send(STATUS_RUNNING, bundle.EMPTY);
             try {
-                String json = handleActionFetchPopularMovies(intent);
-                ArrayList results = createMovieListArray(json);
+                String jsonStr = handleActionFetchPopularMovies(intent);
+                ArrayList results = createMovieListArray(jsonStr);
+
                 bundle.putParcelableArrayList("results", results);
                 receiver.send(STATUS_FINISHED, bundle);
             } catch (Exception e) {
@@ -175,16 +177,23 @@ public class MovieService extends IntentService {
                 JSONObject movieJsonObject = movieArray.getJSONObject(i);
                 Movie movie = new Movie();
 
-                movie.setMovieId(movieJsonObject.getInt(MOVIE_API_RESULTS_ID));
-                movie.setTitle(movieJsonObject.getString(MOVIE_API_RESULTS_TITLE));
-                movie.setReleaseDate(movieJsonObject.getString(MOVIE_API_RESULTS_RELEASE_DATE));
-                movie.setUserRating(movieJsonObject.getDouble(MOVIE_API_RESULTS_RATING));
-                movie.setOverview( movieJsonObject.getString(MOVIE_API_RESULTS_PLOT));
+                movie.setFavorite();
+                movie.setMovieId(movieJsonObject.getInt(MOVIE_API_MOVIE_ID));
+                movie.setTitle(movieJsonObject.getString(MOVIE_API_TITLE));
+                movie.setReleaseDate(movieJsonObject.getString(MOVIE_API_RELEASE_DATE));
+                movie.setVoterAverage(movieJsonObject.getDouble(MOVIE_API_VOTER_AVERAGE));
+                movie.setVoterCount(movieJsonObject.getInt(MOVIE_API_VOTER_COUNT));
+                movie.setOverview(movieJsonObject.getString(MOVIE_API_OVERVIEW));
                 movie.setPosterPath(
                         MOVIE_IMAGE_BASE_URL +
                                 MOVIE_IMAGE_SIZE +
-                        movieJsonObject.getString(MOVIE_API_RESULTS_POSTER_PATH));
-                movie.setPopularity( movieJsonObject.getDouble(MOVIE_API_RESULTS_POPULARITY));
+                                movieJsonObject.getString(MOVIE_API_POSTER_PATH));
+                movie.setBackdropPath(
+                        MOVIE_IMAGE_BASE_URL +
+                                MOVIE_IMAGE_SIZE +
+                                movieJsonObject.getString(MOVIE_API_BACKDROP_PATH));
+                movie.setPopularity( movieJsonObject.getDouble(MOVIE_API_POPULARITY));
+                movie.setPopularity( movieJsonObject.getDouble(MOVIE_API_POPULARITY));
 
                 movieList.add(movie);
             }

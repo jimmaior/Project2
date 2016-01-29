@@ -20,12 +20,13 @@ public class MovieProvider extends ContentProvider {
     private MovieDbHelper mMovieDbHelper;
 
     // CODES
-    private static final int MOVIE = 100;
-    private static final int MOVIES_POPULARITY = 200;
-    private static final int MOVIES_USER_RATING = 300;
-    private static final int MOVIE_WITH_ID = 400;
-    private static final int REVIEWS_WITH_MOVIE_ID = 500;
-    private static final int VIDEOS_WITH_MOVIE_ID = 600;
+    private static final int MOVIES = 100;
+    private static final int MOVIE_BY_MOVIE_ID = 200;
+    private static final int MOVIE_FAVORITE = 300;
+    private static final int MOVIE_REVIEWS_BY_MOVIE_ID = 400;
+    private static final int MOVIE_TRAILER_BY_MOVIE_ID = 500;
+    private static final int MOVIE_REVIEWS = 600;
+    private static final int MOVIE_VIDEO = 700;
 
     private static UriMatcher buildUriMatcher() {
         // returns a specific code depending on which URI is matched.
@@ -33,7 +34,13 @@ public class MovieProvider extends ContentProvider {
         final String authority = MovieContract.CONTENT_AUTHORITY;
 
         // codes and their URI
-        matcher.addURI(authority, MovieContract.MovieEntry.TABLE_NAME, MOVIE);
+        matcher.addURI(authority, MovieContract.PATH_MOVIE, MOVIES);
+        matcher.addURI(authority, MovieContract.PATH_REVIEW, MOVIE_REVIEWS);
+        matcher.addURI(authority, MovieContract.PATH_VIDEO, MOVIE_VIDEO);
+        matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#", MOVIE_BY_MOVIE_ID);
+        matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#/favorite", MOVIE_FAVORITE);
+        matcher.addURI(authority, MovieContract.PATH_REVIEW + "/*/reviews", MOVIE_REVIEWS_BY_MOVIE_ID);
+        matcher.addURI(authority, MovieContract.PATH_VIDEO + "/*/trailer", MOVIE_TRAILER_BY_MOVIE_ID);
 
         return matcher;
     }
@@ -50,14 +57,26 @@ public class MovieProvider extends ContentProvider {
         final int match = sUriMatcher.match(uri);
 
         switch (match) {
-            case MOVIES_POPULARITY: {
-                return MovieContract.MovieEntry.CONTENT__DIR_TYPE;
+            case MOVIES: {
+                return MovieContract.MovieEntry.CONTENT_DIR_TYPE;
             }
-            case MOVIES_USER_RATING: {
-                return MovieContract.MovieEntry.CONTENT__DIR_TYPE;
-            }
-            case MOVIE_WITH_ID: {
+            case MOVIE_BY_MOVIE_ID: {
                 return MovieContract.MovieEntry.CONTENT_ITEM_TYPE;
+            }
+            case MOVIE_FAVORITE: {
+                return MovieContract.MovieEntry.CONTENT_ITEM_TYPE;
+            }
+            case MOVIE_REVIEWS_BY_MOVIE_ID: {
+                return MovieContract.MovieReview.CONTENT_DIR_TYPE;
+            }
+            case MOVIE_TRAILER_BY_MOVIE_ID: {
+                return MovieContract.MovieVideo.CONTENT_ITEM_TYPE;
+            }
+            case MOVIE_REVIEWS: {
+                return MovieContract.MovieReview.CONTENT_DIR_TYPE;
+            }
+            case MOVIE_VIDEO: {
+                return MovieContract.MovieVideo.CONTENT_DIR_TYPE;
             }
             default: {
                 throw new UnsupportedOperationException("Unknown Uri:" + uri);
@@ -68,19 +87,15 @@ public class MovieProvider extends ContentProvider {
 
 
     @Override
-    public Cursor query(
-            Uri uri,
-            String[] projection,
-            String selection,
-            String[] selectionArgs,
-            String sortOrder
-            ){
+    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
+            String sortOrder) {
 
         Cursor returnCursor;
+        int code = sUriMatcher.match(uri);
 
-        switch (sUriMatcher.match(uri)) {
+        switch (code) {
             // All Movies sorted by popularity
-            case MOVIES_POPULARITY: {
+            case MOVIES: {
                 returnCursor = mMovieDbHelper.getReadableDatabase().query(
                         MovieContract.MovieEntry.TABLE_NAME,
                         projection,
@@ -94,7 +109,7 @@ public class MovieProvider extends ContentProvider {
                 return  returnCursor;
             }
 
-            case MOVIES_USER_RATING: {
+            case MOVIE_BY_MOVIE_ID: {
                 returnCursor = mMovieDbHelper.getReadableDatabase().query(
                         MovieContract.MovieEntry.TABLE_NAME,
                         projection,
@@ -106,6 +121,76 @@ public class MovieProvider extends ContentProvider {
                 );
 
                 return  returnCursor;
+            }
+
+            case MOVIE_FAVORITE: {
+                returnCursor = mMovieDbHelper.getReadableDatabase().query(
+                        MovieContract.MovieEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+
+                return  returnCursor;
+            }
+
+            case MOVIE_REVIEWS_BY_MOVIE_ID: {
+                returnCursor = mMovieDbHelper.getReadableDatabase().query(
+                        MovieContract.MovieEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+
+                return  returnCursor;
+            }
+
+            case MOVIE_TRAILER_BY_MOVIE_ID: {
+                returnCursor = mMovieDbHelper.getReadableDatabase().query(
+                        MovieContract.MovieEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+
+                return  returnCursor;
+            }
+
+            case MOVIE_VIDEO: {
+                returnCursor = mMovieDbHelper.getReadableDatabase().query(
+                        MovieContract.MovieVideo.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+
+                return returnCursor;
+            }
+
+            case MOVIE_REVIEWS: {
+                returnCursor = mMovieDbHelper.getReadableDatabase().query(
+                        MovieContract.MovieReview.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+
+                return returnCursor;
             }
 
             default: {
@@ -122,11 +207,30 @@ public class MovieProvider extends ContentProvider {
         Uri returnUri;
 
         switch (sUriMatcher.match(uri)) {
-            case MOVIE: {
+            case MOVIES: {
                 long _id = db.insert(MovieContract.MovieEntry.TABLE_NAME, null, values);
                 // insert if the id is not currently in the database
                 if (_id > 0) {
                     returnUri = MovieContract.MovieEntry.buildMovieUri(_id);
+                } else {
+                    throw new android.database.SQLException("Failed to insert row into: " + uri);
+                }
+                break;
+            }
+            case MOVIE_VIDEO: {
+                long _id = db.insert(MovieContract.MovieVideo.TABLE_NAME, null, values);
+                // insert if the id is not currently in the database
+                if (_id > 0) {
+                    returnUri = MovieContract.MovieVideo.buildVideoUri(_id);
+                } else {
+                    throw new android.database.SQLException("Failed to insert row into: " + uri);
+                }
+                break;
+            } case MOVIE_REVIEWS: {
+                long _id = db.insert(MovieContract.MovieReview.TABLE_NAME, null, values);
+                // insert if the id is not currently in the database
+                if (_id > 0) {
+                    returnUri = MovieContract.MovieReview.buildReviewUri(_id);
                 } else {
                     throw new android.database.SQLException("Failed to insert row into: " + uri);
                 }
@@ -149,8 +253,14 @@ public class MovieProvider extends ContentProvider {
         if (selection == null) selection = "1"; // if null is passed, this makes delete return the number of rows deleted
 
         switch (match) {
-            case MOVIE: {
+            case MOVIES: {
                 rowsDeleted = db.delete(MovieContract.MovieEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            } case MOVIE_REVIEWS: {
+                rowsDeleted = db.delete(MovieContract.MovieReview.TABLE_NAME, selection, selectionArgs);
+                break;
+            } case MOVIE_VIDEO: {
+                rowsDeleted = db.delete(MovieContract.MovieVideo.TABLE_NAME, selection, selectionArgs);
                 break;
             }
             default: {
@@ -174,7 +284,7 @@ public class MovieProvider extends ContentProvider {
         int rowsUpdated = 0;
 
         switch (match) {
-            case MOVIE: {
+            case MOVIES: {
                 rowsUpdated = db.update(MovieContract.MovieEntry.TABLE_NAME, data, selection, selectionArgs);
                 break;
             }
@@ -193,7 +303,7 @@ public class MovieProvider extends ContentProvider {
         final int match = sUriMatcher.match(uri);
 
         switch (match) {
-            case MOVIE: {
+            case MOVIES: {
                 db.beginTransaction();
                 int returnCount = 0;
                 try {
@@ -208,6 +318,40 @@ public class MovieProvider extends ContentProvider {
                     db.endTransaction();
                 }
 
+                getContext().getContentResolver().notifyChange(uri, null);
+                return returnCount;
+            }
+            case MOVIE_REVIEWS: {
+                db.beginTransaction();
+                int returnCount = 0;
+                try {
+                    for (ContentValues value : values) {
+                        long _id = db.insert(MovieContract.MovieReview.TABLE_NAME, null, value);
+                        if (_id != -1 ) {
+                            returnCount ++;
+                        }
+                    }
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+                getContext().getContentResolver().notifyChange(uri, null);
+                return returnCount;
+            }
+            case MOVIE_VIDEO: {
+                db.beginTransaction();
+                int returnCount = 0;
+                try {
+                    for (ContentValues value : values) {
+                        long _id = db.insert(MovieContract.MovieVideo.TABLE_NAME, null, value);
+                        if (_id != -1 ) {
+                            returnCount ++;
+                        }
+                    }
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
                 getContext().getContentResolver().notifyChange(uri, null);
                 return returnCount;
             }

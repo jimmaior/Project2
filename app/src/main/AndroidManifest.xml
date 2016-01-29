@@ -36,6 +36,12 @@
             android:exported="false" >
         </service>
 
+        <provider
+            android:authorities="me.jimm.popularmovies2"
+            android:name=".data.MovieProvider">
+        </provider>
+
+
     </application>
 
 </manifest>

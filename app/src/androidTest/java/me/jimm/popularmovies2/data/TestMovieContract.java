@@ -9,13 +9,21 @@ import android.test.AndroidTestCase;
 public class TestMovieContract extends AndroidTestCase {
 
 
-    // intentionally includes a slash to make sure Uri is getting quoted correctly
-    private static final String TEST_MOVIE_REVIEW = "/North Pole";
-    private static final long TEST_MOVIE_VIDEO = 1419033600L;  // December 20th, 2014
+    // test the URI builder for ListMoviesByPopularity
+    // test the URI builder for ListMoviesByUserRating
+    // test the URI builder for MovieDetailsByMovieId
+    // test the Uri builder for MovieTrailerByMovieId
+    // text the Uri builder for MovieReviewsByMovieId
 
-   
+    public void testBuildMovieListByPopularity() {}
+    public void testBuildMovieListByUserRating() {}
+    public void testBuildMovieDetailsByMovieId() {}
+    public void testBuildMovieTrailerByMovieId() {}
+    public void testBuildMovieReviewsByMovieId() {}
+
+
     public void testBuildMovieLocation() {
-//        Uri locationUri = MovieContract.MovieEntry..buildMovieReview(TEST_MOVIE_REVIEW);
+//        Uri locationUri = MovieContract.MovieEntry.buildMovieReview(TEST_MOVIE_REVIEW);
 //        assertNotNull("Error: Null Uri returned.  You must fill-in buildMovieLocation in " +
 //                        "MovieContract.",
 //                locationUri);

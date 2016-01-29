@@ -29,22 +29,15 @@ public class MovieDbHelper extends SQLiteOpenHelper {
             "CREATE TABLE " + MovieEntry.TABLE_NAME + " (" +
                 MovieEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 MovieEntry.COLUMN_FAVORITE + " INTEGER NOT NULL, " +       /* 0 is false, 1 is true */
+                MovieEntry.COLUMN_BACKDROP_PATH + " TEXT NO NULL, " +
                 MovieEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
                 MovieEntry.COLUMN_OVERVIEW + " TEXT NOT NULL, " +
-                MovieEntry.COLUMN_POSTER_URL + " TEXT NOT NULL, " +
+                MovieEntry.COLUMN_POPULARITY + " TEXT NOT NULL, " +
+                MovieEntry.COLUMN_POSTER_PATH + " TEXT NOT NULL, " +
                 MovieEntry.COLUMN_RELEASE_DATE + " INTEGER NOT NULL, " +
-                MovieEntry.COLUMN_FK_REVIEW_KEY + " TEXT, " +
                 MovieEntry.COLUMN_TITLE + " TEXT NOT NULL, " +
-                MovieEntry.COLUMN_USER_RATING + " REAL NOT NULL, " +
-                MovieEntry.COLUMN_FK_VIDEO_KEY + " TEXT, " +
-
-                // set up the movie entry table to contain foreign keys
-                " FOREIGN KEY (" + MovieEntry.COLUMN_FK_REVIEW_KEY + ") REFERENCES " +
-                MovieReview.TABLE_NAME + " (" + MovieReview._ID + "), " +
-
-                " FOREIGN KEY (" + MovieEntry.COLUMN_FK_VIDEO_KEY + ") REFERENCES " +
-                MovieVideo.TABLE_NAME + " (" + MovieVideo._ID + ") " +
-
+                MovieEntry.COLUMN_VOTE_AVERAGE + " REAL NOT NULL, " +
+                MovieEntry.COLUMN_VOTE_COUNT + " INTEGER NOT NULL " +
                 " );";
 
         final String SQL_CREATE_REVIEW_TABLE =
@@ -53,7 +46,10 @@ public class MovieDbHelper extends SQLiteOpenHelper {
                 MovieReview.COLUMN_AUTHOR + " TEXT NOT NULL, " +
                 MovieReview.COLUMN_CONTENT + " TEXT NOT NULL, " +
                 MovieReview.COLUMN_URL + " TEXT NOT NULL, " +
-                MovieReview.COLUMN_REVIEW_ID + " TEXT NOT NULL " +
+                MovieReview.COLUMN_REVIEW_ID + " TEXT NOT NULL, " +
+                MovieReview.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
+                " FOREIGN KEY (" + MovieReview.COLUMN_MOVIE_ID + ") REFERENCES " +
+                MovieEntry.TABLE_NAME + " (" + MovieEntry.COLUMN_MOVIE_ID + ") " +
                 " );";
 
 
@@ -66,7 +62,10 @@ public class MovieDbHelper extends SQLiteOpenHelper {
                 MovieVideo.COLUMN_SITE +  " TEXT NOT NULL, " +
                 MovieVideo.COLUMN_SIZE + " INTEGER NOT NULL, " +
                 MovieVideo.COLUMN_TYPE + " TEXT NOT NULL, " +
-                MovieVideo.COLUMN_VIDEO_ID + " TEXT NOT NULL " +
+                MovieVideo.COLUMN_VIDEO_ID + " TEXT NOT NULL, " +
+                MovieVideo.COLUMN_MOVIE_ID + " TEXT NOT NULL, " +
+                " FOREIGN KEY (" + MovieVideo.COLUMN_MOVIE_ID + ") REFERENCES " +
+                MovieEntry.TABLE_NAME + " (" + MovieEntry.COLUMN_MOVIE_ID + ") " +
                 " );";
 
         sqLiteDatabase.execSQL(SQL_CREATE_REVIEW_TABLE);
