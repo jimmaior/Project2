@@ -2,9 +2,13 @@ package me.jimm.popularmovies2.data;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.test.AndroidTestCase;
+
+import junit.framework.Test;
+
 import me.jimm.popularmovies2.data.MovieContract.MovieEntry;
 import me.jimm.popularmovies2.data.MovieContract.MovieReview;
 import me.jimm.popularmovies2.data.MovieContract.MovieVideo;
@@ -126,7 +130,7 @@ public class TestProvider extends AndroidTestCase {
     }
 
 
-    public void testGetMovieDetailsByMovieId() {
+    public void testGetMovieDetailsById() {
         // I will know the movieId from the view
         MovieDbHelper dbHelper = new MovieDbHelper(mContext);
         SQLiteDatabase  db = dbHelper.getWritableDatabase();
@@ -147,6 +151,26 @@ public class TestProvider extends AndroidTestCase {
         assertEquals("Error: Return value is not equal to expected value.", expected, actual);
 
         cursor.close();
+
+    }
+
+    public void testGetMovieDetailsByMovieId() {
+        // I will know the movieId from the view
+        MovieDbHelper dbHelper = new MovieDbHelper(mContext);
+        SQLiteDatabase  db = dbHelper.getWritableDatabase();
+        ContentValues cv = TestUtilities.createMovieData();
+        long rowId = db.insert(MovieEntry.TABLE_NAME, null, cv);
+        Cursor c = getContext().getContentResolver().query(MovieContract.MovieEntry.buildMovieUri(rowId), null, null, null, null);
+        DatabaseUtils.dumpCursor(c);
+        assertEquals("Error: Cursor is empty.", 1, c.getCount());
+        int idx = c.getColumnIndex(MovieEntry.COLUMN_MOVIE_ID);
+        int movieId = 0;
+        c.moveToFirst();
+        movieId = c.getInt(idx);
+        assertTrue("Error: the cursor does not contain the movie id", movieId > 0);
+        Cursor d = getContext().getContentResolver().query(MovieEntry.buildMovieUriByMovieId(movieId), null, null, null, null);
+        d.moveToFirst();
+        TestUtilities.validateCurrentRecord("Error: The expected movie data is not returned", d, cv);
 
     }
 

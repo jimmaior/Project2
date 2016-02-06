@@ -28,11 +28,11 @@ public abstract class EndlessScrollListener implements AbsListView.OnScrollListe
 
     @Override
     public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-        Log.d(TAG,
-                "onScroll: firstVisibleItem=" + firstVisibleItem +
-                "; visibleItemCount=" + visibleItemCount +
-                "; totalItemCount=" + totalItemCount +
-                "; mPreviousTotal=" + mPreviousTotal);
+//        Log.d(TAG,
+//                "onScroll: firstVisibleItem=" + firstVisibleItem +
+//                "; visibleItemCount=" + visibleItemCount +
+//                "; totalItemCount=" + totalItemCount +
+//                "; mPreviousTotal=" + mPreviousTotal);
        if (mIsLoading) {
            if (totalItemCount > mPreviousTotal) {
                Log.d(TAG, "loading");

@@ -3,6 +3,8 @@ package me.jimm.popularmovies2.ui;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+
 import me.jimm.popularmovies2.R;
 
 public class DetailActivity extends AppCompatActivity {
@@ -12,7 +14,9 @@ public class DetailActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
+      //  setContentView(R.layout.activity_main);
         setContentView(R.layout.activity_detail);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -24,11 +28,12 @@ public class DetailActivity extends AppCompatActivity {
 
         // this activity was started to display detailed movie data, so we need to get that
         // data and pass it to the detail fragment as an argument
-        detailFragment.setArguments(getIntent().getExtras());
+        //detailFragment.setArguments(getIntent().getExtras());
+
 
         // add the fragment to the fragment manager
         getSupportFragmentManager().beginTransaction()
-                .add(R.id.detail_fragment_container, detailFragment, DETAIL_FRAGMENT_TAG)
+                .add(R.id.fragment_detail_container, detailFragment, DETAIL_FRAGMENT_TAG)
                 .commit();
     }
 }

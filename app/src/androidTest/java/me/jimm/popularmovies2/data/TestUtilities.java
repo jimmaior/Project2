@@ -139,7 +139,6 @@ public class TestUtilities extends AndroidTestCase{
         return rowId;
     }
 
-
     // some default data
     static ContentValues createMovieData() {
         ContentValues movieData = new ContentValues();

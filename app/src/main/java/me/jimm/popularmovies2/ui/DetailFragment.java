@@ -1,12 +1,32 @@
 package me.jimm.popularmovies2.ui;
 
-import android.support.v4.app.Fragment;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.HorizontalScrollView;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
@@ -15,62 +35,261 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import me.jimm.popularmovies2.R;
-import me.jimm.popularmovies2.models.Movie;
+import me.jimm.popularmovies2.data.MovieContract;
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class DetailFragment extends Fragment {
+public class DetailFragment extends Fragment implements
+        LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String TAG = DetailFragment.class.getSimpleName();
 
+    private static final int MOVIE_DETAIL_LOADER = 2;
+    static final String DETAIL_URI = "URI";
+
+
+    private static final String[] MOVIE_COLUMNS  = {
+            MovieContract.MovieEntry._ID,
+            MovieContract.MovieEntry.COLUMN_FAVORITE,
+            MovieContract.MovieEntry.COLUMN_BACKDROP_PATH,
+            MovieContract.MovieEntry.COLUMN_MOVIE_ID,
+            MovieContract.MovieEntry.COLUMN_OVERVIEW,
+            MovieContract.MovieEntry.COLUMN_POPULARITY,
+            MovieContract.MovieEntry.COLUMN_POSTER_PATH,
+            MovieContract.MovieEntry.COLUMN_RELEASE_DATE,
+            MovieContract.MovieEntry.COLUMN_TITLE,
+            MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE,
+            MovieContract.MovieEntry.COLUMN_VOTE_COUNT,
+    };
+
+    // these indices are tied to MOVIE_COLUMNS.
+    // If MOVIE_COLUMNS changes, these must change too
+    static final int COL__ID = 0;
+    static final int COL_FAVORITE = 1;
+    static final int COL_BACKDROP_PATH = 2;
+    static final int COL_MOVIE_ID = 3;
+    static final int COL_OVERVIEW = 4;
+    static final int COL_POPULARITY = 5;
+    static final int COL_POSTER_URL = 6;
+    static final int COL_RELEASE_DATE = 7;
+    static final int COL_TITLE = 8;
+    static final int COL_VOTE_AVERAGE = 9;
+    static final int COL_VOTE_COUNT = 10;
+
     // members
-    private Movie mMovie;
+    private int mMovieId;
+    private Uri mMovieDtlByMovieIdUri;
     private TextView mTvTitle;
     private ImageView mIvPoster;
     private TextView mTvReleaseDate;
     private TextView mTvRating;
     private TextView mTvOverview;
+    private CheckBox mCbFavorite;
+    private ListView mLvReview;
+    private ImageView mIvTrailer;
+    private ImageButton mIbTrailer;
+    private LinearLayout mLlReviews;
+    private LinearLayout mLlTrailers;
+    private HorizontalScrollView mHsvTrailers;
 
 
-    public DetailFragment() {
-    }
+    // default constructor is required
+    public DetailFragment() {}
 
-    public void onCreate(Bundle savedInstanceState) {
 
-        super.onCreate(savedInstanceState);
-
-        Log.d(TAG, "onCreate");
-        Bundle b = getArguments();
-        mMovie = b.getParcelable("movie");
-
+    public void onActivityCreated(Bundle savedInstanceState) {
+        Log.d(TAG, "onActivityCreated");
+        super.onActivityCreated(savedInstanceState);
+        getLoaderManager().initLoader(MOVIE_DETAIL_LOADER, null, this);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView");
+
+        Bundle arguments = getArguments();
+        if (arguments != null) {
+            mMovieDtlByMovieIdUri = arguments.getParcelable(DetailFragment.DETAIL_URI);
+            mMovieId = arguments.getInt("MOVIE_ID");
+        } else {
+            // TODO: Remove this before submitting
+            mMovieDtlByMovieIdUri = Uri.parse("content://me.jimm.popularmovies2/movie_entry/281957");
+            mMovieId = 281957;
+        }
+
         View v = inflater.inflate(R.layout.fragment_detail, container, false);
 
         mTvTitle = (TextView) v.findViewById(R.id.tv_title);
-        mTvTitle.setText(mMovie.getTitle());
-
         mIvPoster = (ImageView) v.findViewById(R.id.iv_poster);
-        Picasso.with(getActivity())
-                .load(mMovie.getPosterPath())
-                .into(mIvPoster);
-
         mTvReleaseDate = (TextView) v.findViewById(R.id.tv_release_date);
-        mTvReleaseDate.setText(formatReleaseDate(mMovie.getReleaseDate()));
-
         mTvRating = (TextView) v.findViewById(R.id.tv_user_rating);
-        mTvRating.setText(formatRating(mMovie.getVoterAverage()));
-
         mTvOverview = (TextView) v.findViewById(R.id.tv_overview);
-        mTvOverview.setText(mMovie.getOverview());
+        mCbFavorite = (CheckBox) v.findViewById(R.id.cb_favorite);
+
+        // Favorites Checkbox
+        mCbFavorite.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                Log.d(TAG, "compoundButton state:" + compoundButton.isChecked() + "; b:" + b);
+                String[] args = new String[1];
+                args[0] = Integer.toString(mMovieId);
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(MovieContract.MovieEntry.COLUMN_FAVORITE, b);
+                getActivity().getContentResolver().update(MovieContract.MovieEntry.buildMovieUriUpdateFavoriteByMovieId(mMovieId),
+                        contentValues, MovieContract.MovieEntry.COLUMN_MOVIE_ID + "= ?", args);
+            }
+        });
+
+        // Trailers
+        mHsvTrailers = (HorizontalScrollView) v.findViewById(R.id.hsv_trailers);
+        mLlTrailers = (LinearLayout) v.findViewById(R.id.ll_trailers);
+
+        // reviews
+        mLlReviews = (LinearLayout) v.findViewById(R.id.ll_reviews);
 
         return v;
     }
+
+    public Loader<Cursor> onCreateLoader(int loader, Bundle args) {
+        Intent intent = getActivity().getIntent();
+   //     mMovieId = intent.getIntExtra("movie_id", 0);
+        String[] whereArgs = new String[1];
+        whereArgs[0] = Integer.toString(mMovieId);
+
+       // return new CursorLoader(getActivity(), intent.getData(), MOVIE_COLUMNS, MovieContract.MovieEntry.COLUMN_MOVIE_ID + "= ?", whereArgs, null);
+        return new CursorLoader(getActivity(), mMovieDtlByMovieIdUri, MOVIE_COLUMNS, MovieContract.MovieEntry.COLUMN_MOVIE_ID + "= ?", whereArgs, null);
+    }
+
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+
+        data.moveToFirst();
+
+        // Movie Title
+        mTvTitle.setText(data.getString(COL_TITLE));
+
+        // Poster
+        Picasso.with(getActivity())
+                .load(data.getString(COL_POSTER_URL))
+                .placeholder(R.drawable.ic_photo_white_48dp)
+                .into(mIvPoster);
+
+        // Release Date
+        mTvReleaseDate.setText(formatReleaseDate(data.getString(COL_RELEASE_DATE)));
+
+        // Rating
+        mTvRating.setText(formatRating(data.getDouble(COL_VOTE_AVERAGE)));
+
+        // Overview
+        mTvOverview.setText(data.getString(COL_OVERVIEW));
+
+        // Favorite
+        int isFavorite = data.getInt(COL_FAVORITE);
+        if (isFavorite == 1) {
+            mCbFavorite.setChecked(true);
+        } else if (isFavorite == 0) {
+            mCbFavorite.setChecked(false);
+        } else {
+            // do nothing
+        }
+
+        // Reviews
+        int movieIdColumnIdx = data.getColumnIndex(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
+        int movieId = data.getInt(movieIdColumnIdx);
+        final String[] whereArgs = new String[1];
+        whereArgs[0] = Integer.toString(movieId);
+        Cursor reviews = getActivity().getContentResolver().query(
+                MovieContract.MovieReview.buildReviewUriByMovieId(movieId),
+                null, MovieContract.MovieReview.COLUMN_MOVIE_ID + "= ?", whereArgs, null);
+        //DatabaseUtils.dumpCursor(reviews);
+        if (reviews != null) {
+            int reviewCount = reviews.getCount();
+            reviews.moveToFirst();
+            for (int i = 0; i < reviewCount; i++, reviews.moveToNext()) {
+                int contentIdx = reviews.getColumnIndex(MovieContract.MovieReview.COLUMN_CONTENT);
+                int authorIdx = reviews.getColumnIndex(MovieContract.MovieReview.COLUMN_AUTHOR);
+                TextView reviewTxtVw = new TextView(getActivity());
+                reviewTxtVw.setText(reviews.getString(contentIdx));
+                reviewTxtVw.setTextColor(Color.WHITE);
+                reviewTxtVw.setId(i);
+                mLlReviews.addView(reviewTxtVw);
+            }
+        }
+        reviews.close();
+
+
+        // Trailers
+        Cursor videos = getActivity().getContentResolver().query(
+            MovieContract.MovieVideo.buildTrailerUriByMovieId(movieId),
+            null, MovieContract.MovieVideo.COLUMN_MOVIE_ID + "=?", whereArgs, null);
+        //DatabaseUtils.dumpCursor(videos);
+        if (videos != null) {
+            int videoCount = videos.getCount();
+            videos.moveToFirst();
+            for (int i = 0; i < videoCount; i++, videos.moveToNext()) {
+                int typeIdx = videos.getColumnIndex(MovieContract.MovieVideo.COLUMN_TYPE);
+                String typeStr = videos.getString(typeIdx);
+                if (typeStr.equals("Trailer")) {
+                    // New TrailerViewGroup
+                    RelativeLayout trailerLayout = new RelativeLayout(getActivity());
+                    // ImageView
+                    ImageView trailerIv = new ImageView(getActivity());
+                    int keyIdx = videos.getColumnIndex(MovieContract.MovieVideo.COLUMN_KEY);
+                    String videoKey = videos.getString(keyIdx);
+                    String url = "http://img.youtube.com/vi/" +
+                            videoKey
+                            + "/mqdefault.jpg";
+                    Picasso.with(getActivity())
+                            .load(url)
+                            .placeholder(R.drawable.placeholder107x60)
+                            .into(trailerIv);
+                    trailerIv.setId(i);
+                    trailerIv.setTag(R.id.trailer_key, videoKey);
+
+                    // image button
+                    ImageButton playTrailerBtn = new ImageButton(getActivity());
+                    playTrailerBtn.setId(i);
+
+                    RelativeLayout.LayoutParams layoutParams = new
+                            RelativeLayout.LayoutParams(
+                            RelativeLayout.LayoutParams.WRAP_CONTENT,
+                            RelativeLayout.LayoutParams.WRAP_CONTENT
+                    );
+
+                    layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+                    playTrailerBtn.setLayoutParams(layoutParams);
+
+                    playTrailerBtn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Log.d(TAG, "Trailer onClick- clicked on ID:" + view.getId());
+                            // the click occurs on the ImageButton, but the tag is located on the
+                            // sibling ImageView
+                            ViewParent parent = view.getParent();
+                            ViewGroup viewGroup = (ViewGroup)  parent;
+                            ImageView taggedIv = (ImageView) viewGroup.findViewById(view.getId());
+                            if (taggedIv != null) {
+                                String key = (String) taggedIv.getTag(R.id.trailer_key);
+                                String url = "https://www.youtube.com/watch?v=" + key;
+                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                            }
+                        }
+                    });
+
+                    trailerLayout.addView(trailerIv);
+                    trailerLayout.addView(playTrailerBtn);
+
+                    mLlTrailers.addView(trailerLayout);
+
+                }
+            }
+        }
+        videos.close();
+
+    }
+
+    public void onLoaderReset(Loader<Cursor> loader) {}
 
     // private methods
     /**
@@ -98,7 +317,5 @@ public class DetailFragment extends Fragment {
         }
         return year;
     }
-
-
 
 }

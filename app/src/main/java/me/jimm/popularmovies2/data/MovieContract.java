@@ -30,8 +30,6 @@ public class MovieContract {
         public static final Uri CONTENT_URI = BASE_CONTENT_URI
                 .buildUpon().appendPath(PATH_MOVIE).build();
 
-
-
         // CONTENT_TYPE
         public static final String CONTENT_DIR_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
@@ -59,8 +57,17 @@ public class MovieContract {
             return ContentUris.withAppendedId(MovieEntry.CONTENT_URI, id);
         }
 
+        public static Uri buildMovieUriByMovieId(int movieId) {
+
+            return CONTENT_URI.buildUpon().appendPath( Integer.toString(movieId)).build();
+        }
+
         public static Uri buildMovieListUri() {
             return MovieEntry.CONTENT_URI;
+        }
+
+        public static Uri buildMovieUriUpdateFavoriteByMovieId(int movieId) {
+            return CONTENT_URI.buildUpon().appendPath(Integer.toString(movieId)).appendPath("favorite").build();
         }
     }
 
@@ -94,7 +101,10 @@ public class MovieContract {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
-
+        public static Uri buildReviewUriByMovieId(int movieId) {
+            return MovieReview.CONTENT_URI
+                    .buildUpon().appendPath(Integer.toString(movieId)).appendPath("reviews").build();
+        }
     }
 
     /*Inner class to define the video resources associated with a movie */
@@ -128,6 +138,11 @@ public class MovieContract {
         public static Uri buildVideoUri(long id) {
 
             return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static Uri buildTrailerUriByMovieId(int movieId) {
+            return MovieVideo.CONTENT_URI
+                    .buildUpon().appendPath(Integer.toString(movieId)).appendPath("trailer").build();
         }
 
     }

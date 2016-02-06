@@ -11,7 +11,7 @@
                 android:orientation="vertical"
                 android:paddingTop="?attr/actionBarSize"
                 tools:context=".ui.DetailFragment"
-                tools:showIn="@layout/activity_detail">
+                tools:showIn="@layout/activity_main">
 
     <TextView
         android:layout_width="match_parent"
@@ -30,6 +30,7 @@
         android:padding="16sp"/>
 
     <LinearLayout
+        android:background="@color/colorPrimary"
         android:id="@+id/ll_detail_out"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
@@ -95,38 +96,142 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:textSize="@dimen/abc_text_size_caption_material"
                     android:text="Large Text"
-                    android:padding="4dp"
+                    android:paddingLeft="4dp"
                     android:id="@+id/tv_user_rating"
                     tools:text="8"
                     android:textColor="@color/colorAccent"/>
 
                 <TextView
+                    android:textSize="@dimen/abc_text_size_caption_material"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/tv_user_rating_per"
-                    android:padding="4dp"
+                    android:paddingRight="4dp"
                     android:text="/10"
                     tools:text="/10"
                     android:textColor="@color/colorAccent"/>
+
+                <!-- http://it-ride.blogspot.com/2010/04/how-to-android-favorite-button-right.html -->
+
+                <CheckBox
+                    android:padding="4dp"
+                    android:textColor="#ffffff"
+                    android:textSize="@dimen/abc_text_size_caption_material"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:button="@android:drawable/btn_star"
+                    android:id="@+id/cb_favorite"/>
+                <!-- android:text="@string/label_favorite_checkbox" -->
 
             </LinearLayout>
 
         </LinearLayout>
 
+
     </LinearLayout>
 
-    <TextView
+
+        <TextView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:text="Medium Text"
+        android:background="@color/colorPrimary"
         android:id="@+id/tv_overview"
-        tools:text="Armed with the astonishing ability to shrink in scale but increase in strength, con-man Scott Lang must embrace his inner-hero and help his mentor, Dr. Hank Pym, protect the secret behind his spectacular Ant-Man suit from a new generation of towering threats. Against seemingly insurmountable obstacles, Pym and Lang must plan and pull off a heist that will save the world."
+        tools:text="@string/overview_placoholder"
         android:textColor="#ffffff"
         android:padding="4dp"/>
 
-</LinearLayout>
+        <TextView
+            android:padding="4dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorAccent"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/label_reviews"
+            android:id="@+id/tv_reviews"
+            android:layout_weight="1"/>
+
+        <ScrollView
+            android:background="@color/colorPrimary"
+            android:headerDividersEnabled="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/sv_reviews"
+            android:padding="4dp">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:id="@+id/ll_reviews"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <!--<TextView-->
+                    <!--android:layout_height="wrap_content"-->
+                    <!--android:layout_width="match_parent"-->
+                    <!--tools:text="This is my review"-->
+                    <!--android:textColor="#ffffff"-->
+                    <!--android:id="@+id/tb_review"/>-->
+
+            </LinearLayout>
+
+        </ScrollView>
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:padding="4dp"
+            android:textColor="@color/colorAccent"
+            android:text="@string/label_trailer"
+            android:id="@+id/tv_trailers"/>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:background="@color/colorPrimary"
+            android:layout_height="wrap_content"
+            android:id="@+id/hsv_trailers"
+            android:padding="4dp">
+
+            <LinearLayout
+                android:id="@+id/ll_trailers"
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                    <!--<RelativeLayout-->
+                        <!--android:id="@+id/rl_trailers"-->
+                        <!--android:layout_width="wrap_content"-->
+                        <!--android:layout_height="wrap_content">-->
+
+                        <!--<ImageView-->
+                            <!--android:id="@+id/iv_trailer"-->
+                            <!--android:layout_width="wrap_content"-->
+                            <!--android:layout_height="wrap_content"-->
+                            <!--tools:src="@drawable/placeholder107x60"-->
+                            <!--android:minWidth="50dp"-->
+                            <!--android:minHeight="100dp"-->
+                            <!--android:layout_margin="1dp"-->
+                            <!--/>-->
+
+                        <!--<ImageButton-->
+                            <!--android:id="@+id/ib_trailer_button"-->
+                            <!--android:layout_width="wrap_content"-->
+                            <!--android:layout_height="wrap_content"-->
+                            <!--android:layout_centerInParent="true"-->
+                            <!--android:src="@drawable/ic_play_circle_outline_black_24dp"-->
+                            <!--/>-->
+                    <!--</RelativeLayout>-->
+
+
+
+            </LinearLayout>
+
+        </HorizontalScrollView>
+
+    </LinearLayout>
 
 </ScrollView>

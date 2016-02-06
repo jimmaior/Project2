@@ -34,7 +34,6 @@ public class Movie implements Parcelable{
     private final static String KEY_RELEASE_DATE = "RELEASE_DATE";
     private final static String KEY_OVERVIEW = "OVERVIEW";
 
-
     public Movie() {}
 
     public Movie(int movieId, String title, double voterAverage, double popularity, String posterPath, String releaseDate, String overview, int voterCount, String backdropPath) {

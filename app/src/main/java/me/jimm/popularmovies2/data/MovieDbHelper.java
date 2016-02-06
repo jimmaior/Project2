@@ -56,13 +56,13 @@ public class MovieDbHelper extends SQLiteOpenHelper {
         final String SQL_CREATE_VIDEO_TABLE =
             "CREATE TABLE " + MovieVideo.TABLE_NAME + " (" +
                 MovieVideo._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                MovieVideo.COLUMN_ISO_639_1 + " TEXT NOT NULL, " +
-                MovieVideo.COLUMN_KEY + " TEXT NOT NULL, " +
+                MovieVideo.COLUMN_ISO_639_1 + " TEXT, " +
+                MovieVideo.COLUMN_KEY + " TEXT, " +
                 MovieVideo.COLUMN_NAME + " TEXT NOT NULL, " +
-                MovieVideo.COLUMN_SITE +  " TEXT NOT NULL, " +
-                MovieVideo.COLUMN_SIZE + " INTEGER NOT NULL, " +
+                MovieVideo.COLUMN_SITE +  " TEXT, " +
+                MovieVideo.COLUMN_SIZE + " TEXT NOT NULL, " +
                 MovieVideo.COLUMN_TYPE + " TEXT NOT NULL, " +
-                MovieVideo.COLUMN_VIDEO_ID + " TEXT NOT NULL, " +
+                MovieVideo.COLUMN_VIDEO_ID + " TEXT, " +
                 MovieVideo.COLUMN_MOVIE_ID + " TEXT NOT NULL, " +
                 " FOREIGN KEY (" + MovieVideo.COLUMN_MOVIE_ID + ") REFERENCES " +
                 MovieEntry.TABLE_NAME + " (" + MovieEntry.COLUMN_MOVIE_ID + ") " +
