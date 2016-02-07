@@ -31,6 +31,10 @@
                 android:value=".ui.MainActivity"/>
         </activity>
 
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:label="Settings"/>
+
         <service
             android:name=".models.MovieService"
             android:exported="false" >

@@ -2,16 +2,13 @@ package me.jimm.popularmovies2.ui;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,6 +19,7 @@ import java.util.ArrayList;
 
 import me.jimm.popularmovies2.MovieListAdapter;
 import me.jimm.popularmovies2.R;
+import me.jimm.popularmovies2.Utils;
 import me.jimm.popularmovies2.data.MovieContract;
 import me.jimm.popularmovies2.models.Movie;
 import me.jimm.popularmovies2.models.MovieService;
@@ -34,13 +32,13 @@ public class MainFragment extends Fragment implements
 
      private static final String TAG = MainFragment.class.getSimpleName();
 
-    private String mCurrentSortOrder;
+    // moved to MainActivity private static String mCurrentSortOrder;
     private static int MOVIE_LOADER = 1;
     private GridView mGridView;
     private MovieListAdapter mMovieListAdapter;
     private ProgressBar mProgressBar;
     private int mLastPage = 1;  // last page of data loaded, this variable is updated onScrolling
-    private static final String SORT_PREFERENCE = "sort_order_settings"; // ListPreference key
+    // moved to Utuls: private static final String SORT_PREFERENCE = "sort_order_settings"; // ListPreference key
 	private static final String PERSIST_MOVIE_LIST = "movie_list";
     private static final String PERSIST_SORT_ORDER = "current_sort_order";
 
@@ -100,8 +98,8 @@ public class MainFragment extends Fragment implements
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
 
-        mCurrentSortOrder = getSortOrderPreference();
-        fetchMovieData(getActivity());
+//        mCurrentSortOrder = Utils.getSortOrderPreference(getActivity());
+//        updateMovieData(getActivity());
 
 
 //        if (savedInstanceState != null) {
@@ -119,7 +117,7 @@ public class MainFragment extends Fragment implements
 //        } else {
 //            mMovies = new ArrayList();
 //            mCurrentSortOrder = getSortOrderPreference();
-//            fetchMovieData(getActivity());
+//            updateMovieData(getActivity());
 //        }
     }
 
@@ -147,12 +145,19 @@ public class MainFragment extends Fragment implements
             public boolean onLoadMore(int page, int totalItemCount) {
                 Log.d(TAG, "onLoadMore");
                 mLastPage = page;
-                fetchMovieData(getActivity());
+                updateMovieData(getActivity());
                 return true;
             }
         });
 
         return v;
+    }
+
+    public void onSortOrderChanged() {
+        // TODO: update the detail fragment too.
+        mLastPage = 1;
+        updateMovieData(getActivity());
+        getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
     }
 
     public void showLoading(boolean visible) {
@@ -176,35 +181,11 @@ public class MainFragment extends Fragment implements
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
-
-        Log.d(TAG, "onPause" +
-                "; mCurrentSortOrder=" + mCurrentSortOrder +
-                "; getSortOrderPreference()=" + getSortOrderPreference());
-
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        Log.d(TAG, "onResume" +
-                "; mCurrentSortOrder=" + mCurrentSortOrder +
-                "; getSortOrderPreference()=" + getSortOrderPreference());
-
-        if (!mCurrentSortOrder.equals(getSortOrderPreference())) {
-            mCurrentSortOrder = getSortOrderPreference();
-            mLastPage = 1;
-            fetchMovieData(getActivity());
-        }
-    }
-
-    @Override
     public void onSaveInstanceState(Bundle bundle) {
         super.onSaveInstanceState(bundle);
         Log.d(TAG, "onSaveInstanceState()");
   //      bundle.putParcelableArrayList(PERSIST_MOVIE_LIST, mMovies);
-        bundle.putString(PERSIST_SORT_ORDER, mCurrentSortOrder);
+  //      bundle.putString(PERSIST_SORT_ORDER, mCurrentSortOrder);
     }
 
     public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
@@ -218,18 +199,13 @@ public class MainFragment extends Fragment implements
             int movieId = cursor.getInt(COL_MOVIE_ID);
             Uri uri = MovieContract.MovieEntry.buildMovieUriByMovieId(movieId);
             ((Callback) getActivity()).onItemSelected(uri, movieId);
-
-//            Intent intent = new Intent(getActivity(), DetailActivity.class);
-//            intent.putExtra("movie_id", movieId);
-//            intent.setData(uri);
-//            startActivity(intent);
         }
     }
 
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         // TODO; wire up the sortOrder from SharedPreferences
         // TODO: build the appropriate URI for the Movie Content
-        String sortPreference = getSortOrderPreference();
+        String sortPreference = Utils.getSortOrderPreference(getActivity());
         String sortOrder =  " favorite DESC, " + sortPreference + " DESC";
         Log.d(TAG, "onCreateLoader(): sortOrder=" + sortOrder );
         Uri movieBySortOrder = MovieContract.MovieEntry.buildMovieListUri();
@@ -251,38 +227,38 @@ public class MainFragment extends Fragment implements
     }
 
 
-    private void fetchMovieData(Context context) {
-        Log.d(TAG, "fetchMovieData");
-
+    private void updateMovieData(Context context) {
+        Log.d(TAG, "updateMovieData");
+        String currentSortOrder = Utils.getSortOrderPreference(getActivity());
         final Intent intent = new Intent(Intent.ACTION_SYNC, null, context, MovieService.class);
-        if (mCurrentSortOrder != null) {
-            intent.putExtra("sort_by", mCurrentSortOrder);
+        if (currentSortOrder != null) {
+            intent.putExtra("sort_by", currentSortOrder);
         } else {
-            intent.putExtra("sort_by", getSortOrderPreference());
+            intent.putExtra("sort_by", Utils.getSortOrderPreference(getActivity()));
         }
         intent.putExtra("page", mLastPage);
         intent.putExtra("command", "get_movie_data");
         getActivity().startService(intent);
     }
 
-    /**
-     * retrieves the user preference for sort order as defined in 'Settings'
-     * */
-    private String getSortOrderPreference() {
-        Log.d(TAG, "getSortOrderPreference");
-        // http://stackoverflow.com/questions/2767354/default-value-of-android-preference
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String defaultValue = getActivity().getResources().getString(R.string.pref_sort_default);
-        String sortOrder = prefs.getString(SORT_PREFERENCE, defaultValue);
-        if (sortOrder.equals("POPULARITY")) {
-            return MovieContract.MovieEntry.COLUMN_POPULARITY;
-        } else if (sortOrder.equals("RATING")) {
-            return MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE;
-        } else {
-            Log.e(TAG, "Sort Order undefined: sortOrder='" + sortOrder + "'");
-            return null;
-        }
-    }
+//    /**
+//     * retrieves the user preference for sort order as defined in 'Settings'
+//     * */
+//    private String getSortOrderPreference() {
+//        Log.d(TAG, "getSortOrderPreference");
+//        // http://stackoverflow.com/questions/2767354/default-value-of-android-preference
+//        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+//        String defaultValue = getActivity().getResources().getString(R.string.pref_sort_default);
+//        String sortOrder = prefs.getString(SORT_PREFERENCE, defaultValue);
+//        if (sortOrder.equals("POPULARITY")) {
+//            return MovieContract.MovieEntry.COLUMN_POPULARITY;
+//        } else if (sortOrder.equals("RATING")) {
+//            return MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE;
+//        } else {
+//            Log.e(TAG, "Sort Order undefined: sortOrder='" + sortOrder + "'");
+//            return null;
+//        }
+//    }
 
     private void clearDatabase() {
         Log.d(TAG, "clearDatabase()");

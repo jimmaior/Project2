@@ -109,14 +109,15 @@ public class DetailFragment extends Fragment implements
                              Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView");
 
-        Bundle arguments = getArguments();
-        if (arguments != null) {
-            mMovieDtlByMovieIdUri = arguments.getParcelable(DetailFragment.DETAIL_URI);
-            mMovieId = arguments.getInt("MOVIE_ID");
+        // data source depends on how we get here
+        if (getArguments() == null) {
+            Intent intent = getActivity().getIntent();
+            mMovieId = intent.getIntExtra("MOVIE_ID", 0);
+            mMovieDtlByMovieIdUri = intent.getData();
         } else {
-            // TODO: Remove this before submitting
-            mMovieDtlByMovieIdUri = Uri.parse("content://me.jimm.popularmovies2/movie_entry/281957");
-            mMovieId = 281957;
+            Bundle bundle = getArguments();
+            mMovieDtlByMovieIdUri = bundle.getParcelable(DetailFragment.DETAIL_URI);
+            mMovieId = bundle.getInt("MOVIE_ID");
         }
 
         View v = inflater.inflate(R.layout.fragment_detail, container, false);
@@ -153,13 +154,11 @@ public class DetailFragment extends Fragment implements
     }
 
     public Loader<Cursor> onCreateLoader(int loader, Bundle args) {
-        Intent intent = getActivity().getIntent();
-   //     mMovieId = intent.getIntExtra("movie_id", 0);
+        Uri uri;
         String[] whereArgs = new String[1];
         whereArgs[0] = Integer.toString(mMovieId);
-
-       // return new CursorLoader(getActivity(), intent.getData(), MOVIE_COLUMNS, MovieContract.MovieEntry.COLUMN_MOVIE_ID + "= ?", whereArgs, null);
-        return new CursorLoader(getActivity(), mMovieDtlByMovieIdUri, MOVIE_COLUMNS, MovieContract.MovieEntry.COLUMN_MOVIE_ID + "= ?", whereArgs, null);
+        uri = mMovieDtlByMovieIdUri;
+        return new CursorLoader(getActivity(), uri, MOVIE_COLUMNS, MovieContract.MovieEntry.COLUMN_MOVIE_ID + "= ?", whereArgs, null);
     }
 
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
