@@ -13,6 +13,7 @@ import android.view.MenuItem;
 import me.jimm.popularmovies2.R;
 import me.jimm.popularmovies2.Utils;
 import me.jimm.popularmovies2.data.MovieContract;
+import me.jimm.popularmovies2.models.MovieService;
 
 public class MainActivity extends AppCompatActivity implements MainFragment.Callback {
 
@@ -60,7 +61,6 @@ public class MainActivity extends AppCompatActivity implements MainFragment.Call
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment_detail_container, fragment, DETAIL_FRAGMENT)
                         .commit();
-
                 // init activity
                 mCurrentSortOrder = Utils.getSortOrderPreference(this);
             }
@@ -78,6 +78,10 @@ public class MainActivity extends AppCompatActivity implements MainFragment.Call
 //                        .commit();
 //            }
         }
+
+
+        initMovieDbFromService();
+
     }
 
     @Override
@@ -103,7 +107,6 @@ public class MainActivity extends AppCompatActivity implements MainFragment.Call
             if (mainFragment != null) {
                 mainFragment.onSortOrderChanged();
             }
-
         }
     }
 
@@ -112,11 +115,26 @@ public class MainActivity extends AppCompatActivity implements MainFragment.Call
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+        int itemId = item.getItemId();
 
-        if (id == R.id.action_settings) {
-            Log.d(TAG, "onOptionItemSelected - Action_Settings");
-            startActivity(new Intent(this, SettingsActivity.class));
+        switch (itemId) {
+            case (R.id.action_settings): {
+                Log.d(TAG, "onOptionItemSelected - Action_Settings");
+                startActivity(new Intent(this, SettingsActivity.class));
+                break;
+            }
+            case (R.id.action_share): {
+                // TODO: launch a Share Intent FROM DETAIL FRAGMENT!!!!!
+                // http://developer.android.com/training/sharing/send.html and
+                // http://stackoverflow.com/questions/574195/android-youtube-app-play-video-intent
+
+                //startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=cxLG2wtE7TM")));
+                Log.d(TAG, "onOptionItemSelected - Action_Share");
+                break;
+            }
+            default: {
+                break;
+            }
         }
         return super.onOptionsItemSelected(item);
     }
@@ -141,5 +159,14 @@ public class MainActivity extends AppCompatActivity implements MainFragment.Call
             intent.setData(contentUri);
             startActivity(intent);
         }
+    }
+
+    private void initMovieDbFromService() {
+        Log.d(TAG, "loadLocalMovieData");
+        final Intent intent = new Intent(Intent.ACTION_SYNC, null, this, MovieService.class);
+        intent.putExtra("sort_by", Utils.getSortOrderPreference(this));
+        intent.putExtra("page", 1);
+        intent.putExtra("command", "get_movie_data");
+        startService(intent);
     }
 }

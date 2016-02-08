@@ -2,8 +2,11 @@
     <!-- app titles -->
     <string name="app_name">Popular Movies 2</string>
 
-    <!--  Settings -->
+    <!-- Actionbar Items-->
     <string name="action_settings">Settings</string>
+    <string name="action_share">Share Trailer</string>
+
+    <!--  Settings -->
     <string name="title_activity_detail">Movie Details</string>
     <string name="pref_sort">Sort order</string>
     <string name="pref_sort_default">POPULARITY</string>
@@ -19,6 +22,5 @@
         con-man Scott Lang must embrace his inner-hero and help his mentor, Dr. Hank Pym, protect the secret behind his
         spectacular Ant-Man suit from a new generation of towering threats. Against seemingly insurmountable obstacles,
         Pym and Lang must plan and pull off a heist that will save the world.</string>
-
 
 </resources>

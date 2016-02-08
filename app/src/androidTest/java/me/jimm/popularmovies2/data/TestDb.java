@@ -146,8 +146,6 @@ public class TestDb extends AndroidTestCase {
         db.close();
     }
 
-    // todo: start here
-
 
         public void testMovieEntryTable() {
 

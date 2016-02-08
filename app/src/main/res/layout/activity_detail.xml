@@ -24,13 +24,14 @@
     </android.support.design.widget.AppBarLayout>
 
 
-       <FrameLayout
-        android:layout_below="@id/toolbar"
-        android:id="@+id/fragment_detail_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+   <FrameLayout
+    android:layout_below="@id/toolbar"
+    android:id="@+id/fragment_detail_container"
 
-       </FrameLayout>
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+   </FrameLayout>
 
 
 </android.support.design.widget.CoordinatorLayout>

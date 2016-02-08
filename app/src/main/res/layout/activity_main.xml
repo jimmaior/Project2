@@ -20,7 +20,6 @@
             app:popupTheme="@style/AppTheme.PopupOverlay"/>
     </android.support.design.widget.AppBarLayout>
 
-
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
               android:id="@+id/fragment_main"
               android:name="me.jimm.popularmovies2.ui.MainFragment"

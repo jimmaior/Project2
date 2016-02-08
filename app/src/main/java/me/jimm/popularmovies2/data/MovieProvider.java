@@ -270,7 +270,7 @@ public class MovieProvider extends ContentProvider {
             }
         }
 
-        Log.d(TAG, "insert returned uri" + returnUri.getPath());
+        //Log.d(TAG, "insert returned uri" + returnUri.getPath());
         return returnUri;
     }
 
@@ -302,7 +302,7 @@ public class MovieProvider extends ContentProvider {
         if (rowsDeleted != 0 ) {
             getContext().getContentResolver().notifyChange(uri, null);
         }
-        Log.d(TAG, "rowsDeleted:" + rowsDeleted);
+        //Log.d(TAG, "rowsDeleted:" + rowsDeleted);
         return rowsDeleted;
     }
 
@@ -323,11 +323,16 @@ public class MovieProvider extends ContentProvider {
                 rowsUpdated = db.update(MovieContract.MovieEntry.TABLE_NAME, values, whereClause, whereArgs);
                 break;
             }
+            case MOVIE_BY_MOVIE_ID: {
+                rowsUpdated = db.update(MovieContract.MovieEntry.TABLE_NAME, values, whereClause, whereArgs);
+                break;
+
+            }
             default: {
                 throw new UnsupportedOperationException("Unknown Uri:" + uri);
             }
         }
-        Log.d(TAG, "rowsUpdated MOVIES:" + rowsUpdated);
+        //Log.d(TAG, "rowsUpdated MOVIES:" + rowsUpdated);
         return rowsUpdated;
     }
 
