@@ -80,7 +80,22 @@ public class MainActivity extends AppCompatActivity implements MainFragment.Call
         }
 
 
-        initMovieDbFromService();
+        if (savedInstanceState == null) {
+            Log.d(TAG, "initialize data");
+
+            // clean up cache
+            getContentResolver().delete(MovieContract.MovieEntry.CONTENT_URI, null, null);
+            getContentResolver().delete(MovieContract.MovieReview.CONTENT_URI, null, null);
+            getContentResolver().delete(MovieContract.MovieVideo.CONTENT_URI, null, null);
+
+            // init data load from Movie Service
+            final Intent intent = new Intent(Intent.ACTION_SYNC, null, this, MovieService.class);
+            intent.putExtra("sort_by", Utils.getSortOrderPreference(this));
+            intent.putExtra("page", 1);
+            intent.putExtra("command", "get_movie_data");
+            startService(intent);
+        }
+
 
     }
 
@@ -99,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements MainFragment.Call
                 "; mCurrentSortOrder=" + mCurrentSortOrder +
                 "; getSortOrderPreference()=" + Utils.getSortOrderPreference(this));
 
-        if (mCurrentSortOrder != null & !mCurrentSortOrder.equals(Utils.getSortOrderPreference(this))) {
+        if (mCurrentSortOrder != null && !mCurrentSortOrder.equals(Utils.getSortOrderPreference(this))) {
             // update the current sort order and refresh the movie data
             mCurrentSortOrder = Utils.getSortOrderPreference(this);
             MainFragment mainFragment = (MainFragment) getSupportFragmentManager()
@@ -142,6 +157,14 @@ public class MainActivity extends AppCompatActivity implements MainFragment.Call
     @Override
     public void onItemSelected(Uri contentUri, int movieId) {
         Log.d(TAG, "onItemSelected - movieId:" + movieId + "; contentUri:" + contentUri.toString());
+
+        Intent movieDetailIntent =  new Intent(Intent.ACTION_SYNC, null, this, MovieService.class);
+        movieDetailIntent.putExtra("movie_id", movieId);
+        movieDetailIntent.putExtra("page", 1);
+        movieDetailIntent.putExtra("command", "get_movie_detail_data");
+        startService(movieDetailIntent);
+
+
         if (mTwoPane) {
             // show movie details in this activity, by adding/replacing the detail fragment
             Bundle args = new Bundle();
@@ -159,14 +182,5 @@ public class MainActivity extends AppCompatActivity implements MainFragment.Call
             intent.setData(contentUri);
             startActivity(intent);
         }
-    }
-
-    private void initMovieDbFromService() {
-        Log.d(TAG, "loadLocalMovieData");
-        final Intent intent = new Intent(Intent.ACTION_SYNC, null, this, MovieService.class);
-        intent.putExtra("sort_by", Utils.getSortOrderPreference(this));
-        intent.putExtra("page", 1);
-        intent.putExtra("command", "get_movie_data");
-        startService(intent);
     }
 }

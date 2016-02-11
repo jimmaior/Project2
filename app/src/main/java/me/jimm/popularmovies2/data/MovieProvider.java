@@ -2,6 +2,7 @@ package me.jimm.popularmovies2.data;
 
 import android.annotation.TargetApi;
 import android.content.ContentProvider;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
@@ -84,7 +85,6 @@ public class MovieProvider extends ContentProvider {
             default: {
                 throw new UnsupportedOperationException("Unknown Uri:" + uri);
             }
-
         }
     }
 
@@ -97,7 +97,7 @@ public class MovieProvider extends ContentProvider {
         int code = sUriMatcher.match(uri);
 
         switch (code) {
-            // All Movies sorted by popularity
+            // All Movies sorted by sortOrder preference
             case MOVIES: {
                 returnCursor = mMovieDbHelper.getReadableDatabase().query(
                         MovieContract.MovieEntry.TABLE_NAME,
@@ -138,8 +138,8 @@ public class MovieProvider extends ContentProvider {
                         null,
                         sortOrder
                 );
-               // Log.d(TAG, "query() MOVIE_BY_MOVIE_ID:" + DatabaseUtils.dumpCursorToString(returnCursor));
-               // DatabaseUtils.dumpCursor(returnCursor);
+                // Log.d(TAG, "query() MOVIE_BY_MOVIE_ID:" + DatabaseUtils.dumpCursorToString(returnCursor));
+                // DatabaseUtils.dumpCursor(returnCursor);
                 break;
             }
 
@@ -234,10 +234,11 @@ public class MovieProvider extends ContentProvider {
 
         final SQLiteDatabase db = mMovieDbHelper.getWritableDatabase();
         Uri returnUri;
+        long id;
 
         switch (sUriMatcher.match(uri)) {
             case MOVIES: {
-                long id = db.insert(MovieContract.MovieEntry.TABLE_NAME, null, values);
+                id = db.insert(MovieContract.MovieEntry.TABLE_NAME, null, values);
                 // insert if the id is not currently in the database
                 if (id > 0) {
                     returnUri = MovieContract.MovieEntry.buildMovieUri(id);
@@ -247,7 +248,7 @@ public class MovieProvider extends ContentProvider {
                 break;
             }
             case MOVIE_VIDEO: {
-                long id = db.insert(MovieContract.MovieVideo.TABLE_NAME, null, values);
+                id = db.insert(MovieContract.MovieVideo.TABLE_NAME, null, values);
                 // insert if the id is not currently in the database
                 if (id > 0) {
                     returnUri = MovieContract.MovieVideo.buildVideoUri(id);
@@ -256,7 +257,7 @@ public class MovieProvider extends ContentProvider {
                 }
                 break;
             } case MOVIE_REVIEWS: {
-                long id = db.insert(MovieContract.MovieReview.TABLE_NAME, null, values);
+                id = db.insert(MovieContract.MovieReview.TABLE_NAME, null, values);
                 // insert if the id is not currently in the database
                 if (id > 0) {
                     returnUri = MovieContract.MovieReview.buildReviewUri(id);
@@ -269,6 +270,11 @@ public class MovieProvider extends ContentProvider {
                 throw new UnsupportedOperationException("Unknown Uri:" + uri);
             }
         }
+
+        // Now when there is any change in URI underlying data using insert()/delete()/update()
+        // we notify the content resolver about the change using:
+        ContentResolver cr = getContext().getContentResolver();
+        if (cr != null ) {cr.notifyChange(uri, null); }
 
         //Log.d(TAG, "insert returned uri" + returnUri.getPath());
         return returnUri;
@@ -328,10 +334,19 @@ public class MovieProvider extends ContentProvider {
                 break;
 
             }
+            case MOVIE_TRAILER_BY_MOVIE_ID: {
+                rowsUpdated = db.update(MovieContract.MovieVideo.TABLE_NAME, values, whereClause, whereArgs);
+                break;
+            }
             default: {
                 throw new UnsupportedOperationException("Unknown Uri:" + uri);
             }
         }
+
+        // Now when there is any change in URI underlying data using insert()/delete()/update()
+        // we notify the content resolver about the change using:
+        ContentResolver cr = getContext().getContentResolver();
+        if (cr != null ) {cr.notifyChange(uri, null); }
         //Log.d(TAG, "rowsUpdated MOVIES:" + rowsUpdated);
         return rowsUpdated;
     }

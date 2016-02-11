@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -68,14 +69,11 @@ public class MovieService extends IntentService {
     private static final String REVIEW_API_AUTHOR = "author";
     private static final String REVIEW_API_URL = "url";
 
-
     // API Parameters ////////////////////////////////////////////////////////
     // full poster path
     private static final String MOVIE_IMAGE_BASE_URL = "http://image.tmdb.org/t/p/";
     private static final String MOVIE_VOTE_COUNT_GTE_VALUE = "10";
-    //private static final String MOVIE_IMAGE_SIZE = "w185/";
     private static final String MOVIE_IMAGE_SIZE = "w342/"; // seems better
-
 
     public MovieService() {
         super("MovieService");
@@ -90,28 +88,52 @@ public class MovieService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         Log.d(TAG, "onHandleIntent()");
 
+        Bundle bundle = new Bundle();
         String command = intent.getStringExtra("command");
-        if (command.equals("get_movie_data")) {
-            try {
-                String movieJson = fetchMovieDataFromRestService(intent);
-                ArrayList results = createMovieListArray(movieJson);
-                saveMovieData(results);
-                fetchAndSaveMovieDtlsFromRestService(results);
-            } catch (Exception e) {
-                   e.getMessage();
+        switch (command) {
+            case "get_movie_data": {
+                try {
+                    String moviesJson = fetchMovieData(intent);
+                    ArrayList results = createMovieListArray(moviesJson);
+                    bundle.putParcelableArrayList("results", results);
+  //                  receiver.send(STATUS_FINISHED, bundle);
+                    // TODO: remove save all movie data
+                     saveMovieData(results);
+                    // fetchMovieDetails(results);
+                } catch (Exception e) {
+                    bundle.putString(Intent.EXTRA_TEXT, e.toString());
+ //                   receiver.send(STATUS_ERROR, bundle);
+                }
+                break;
+            }
+            case "get_movie_detail_data": {
+                try {
+                    // TODO: Requires the movieId instead of the results
+                    int movieId = intent.getIntExtra("movie_id", 0);
+                    String movieDtlsJson = fetchMovieDetails(movieId);
+                    saveMovieDetailData(movieDtlsJson);
+                } catch (Exception e) {
+                    e.getMessage();
+                }
+                break;
+            }
+            case "save_favorite_movie": { }
+            case "save_favorite_movie_details": {}
+            default: {
+                Log.e(TAG, "Error: unsupported command '" + command + "'" );
             }
         }
     }
 
     @Nullable
-    private String fetchMovieDataFromRestService(Intent intent) {
-        Log.d(TAG, "fetchMovieDataFromRestService()");
+    private String fetchMovieData(Intent intent) {
+        Log.d(TAG, "fetchMovieData()");
 
         // need to be declared outside of the try so they can be closed in the finally block
         HttpURLConnection urlConnection = null;
         BufferedReader reader = null;
 
-        String popularMoviesJsonString = null;
+        String moviesJsonString = null;
 
         try {
             // construct the URL
@@ -153,7 +175,7 @@ public class MovieService extends IntentService {
                 return null;
             } else {
                 // get structured data from JSON String
-                popularMoviesJsonString = buffer.toString();
+                moviesJsonString = buffer.toString();
             }
         }
         catch (IOException ioe) {
@@ -171,18 +193,19 @@ public class MovieService extends IntentService {
             }
         }
 
-        return popularMoviesJsonString;
+        return moviesJsonString;
     }
 
 
     @Nullable
-    private void fetchAndSaveMovieDtlsFromRestService(ArrayList<Movie> movies) {
-        Log.d(TAG, "fetchAndSaveMovieDtlsFromRestService()");
+    private String fetchMovieDetails(int movieId) {
+        Log.d(TAG, "fetchMovieDetails()");
 
         // need to be declared outside of the try so they can be closed in the finally block
         HttpURLConnection urlConnection = null;
         BufferedReader reader = null;
-        ArrayList<String> movieDtlJsonList = new ArrayList<>(movies.size());
+
+        String movieDetailsJsonString = null;
 
         try {
             // construct the URL: example: http://api.themoviedb.org/3/movie/140607?api_key=XXX&append_to_response=reviews%2Ctrailers
@@ -191,41 +214,38 @@ public class MovieService extends IntentService {
             final String JSON_OBJECTS = "reviews,trailers";
             final String API_KEY_PARAM = "api_key";
 
-            for (int i = 0; i < movies.size(); i ++) {
-                Uri builtUri = Uri.parse(BASE_VIDEO_URL).buildUpon()
-                        .appendPath(Integer.toString(movies.get(i).getMovieId()))
-                        .appendQueryParameter(APPEND_TO_RESPONSE, JSON_OBJECTS )
-                        .appendQueryParameter(API_KEY_PARAM, BuildConfig.MOVIE_DB_API_KEY)
-                        .build();
-                URL url = new URL(builtUri.toString());
+            Uri builtUri = Uri.parse(BASE_VIDEO_URL).buildUpon()
+                    .appendPath(Integer.toString(movieId))
+                    .appendQueryParameter(APPEND_TO_RESPONSE, JSON_OBJECTS)
+                    .appendQueryParameter(API_KEY_PARAM, BuildConfig.MOVIE_DB_API_KEY)
+                    .build();
+            URL url = new URL(builtUri.toString());
 
-                // create the request to VIDEO API
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
+            // create the request to VIDEO API
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("GET");
+            urlConnection.connect();
 
-                // Read the input stream into a String
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
+            // Read the input stream into a String
+            InputStream inputStream = urlConnection.getInputStream();
+            StringBuffer buffer = new StringBuffer();
 
-                if (inputStream == null) {
-                    // Nothing to do
-                } else {
-                    reader = new BufferedReader(new InputStreamReader(inputStream));
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        buffer.append(line + "\n");  // adding a new line character for debug readability
-                    }
-                }
-
-                if (buffer.length() == 0) {
-                    // stream was empty
-                } else {
-                    // store the json objects to be saved in an array
-                    movieDtlJsonList.add(buffer.toString());
+            if (inputStream == null) {
+                // Nothing to do
+            } else {
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    buffer.append(line + "\n");  // adding a new line character for debug readability
                 }
             }
 
+            if (buffer.length() == 0) {
+                // stream was empty
+            } else {
+                // store the json objects to be saved in an array
+                movieDetailsJsonString = buffer.toString();
+            }
         }
         catch (IOException ioe) {
             Log.e(TAG, "Error attempting to get the video data. " + ioe.getMessage(), ioe);
@@ -242,24 +262,22 @@ public class MovieService extends IntentService {
             }
         }
 
-        saveMovieDetailData(movieDtlJsonList);
+        return movieDetailsJsonString;
     }
 
-    private void saveMovieDetailData(ArrayList<String> jsonStringList) {
-        Log.d(TAG, "saveMovieDetailData: objects to be processed:" + jsonStringList.size());
 
-        Vector<ContentValues> reviewCvVector = new Vector<>();
-        Vector<ContentValues> trailerCvVector = new Vector<>();
+    private void saveMovieDetailData(String  jsonStringList) {
+        Log.d(TAG, "saveMovieDetailData: object to be processed:" + jsonStringList);
 
-        for (int idx = 0; idx < jsonStringList.size(); idx++) {
             // PARSE DATA INTO CONTENT VALUES
             try {
-                JSONObject movieDtlObj = new JSONObject(jsonStringList.get(idx));
+                JSONObject movieDtlObj = new JSONObject(jsonStringList);
                 int movieId = movieDtlObj.getInt(MOVIE_API_MOVIE_ID);
 
                 // REVIEWS
                 JSONObject movieReviewObj = movieDtlObj.getJSONObject(MOVIE_API_REVIEWS);
                 JSONArray movieReviewArray = movieReviewObj.getJSONArray(MOVIE_API_RESULTS);
+                Log.d(TAG, "review count:" + movieReviewArray.length());
                 for (int i = 0; i < movieReviewArray.length(); i++) {
                     ContentValues movieReviewValues = new ContentValues();
                     JSONObject review = movieReviewArray.getJSONObject(i);
@@ -268,14 +286,16 @@ public class MovieService extends IntentService {
                     movieReviewValues.put(MovieContract.MovieReview.COLUMN_CONTENT, review.getString(REVIEW_API_CONTENT));
                     movieReviewValues.put(MovieContract.MovieReview.COLUMN_REVIEW_ID, review.getString(REVIEW_API_REVIEW_ID));
                     movieReviewValues.put(MovieContract.MovieReview.COLUMN_URL, review.getString(REVIEW_API_URL));
-                    //Log.d(TAG, movieReviewArray.get(i).toString());
-                    reviewCvVector.add(movieReviewValues);
-                }
 
+                    // SAVE DATA TO CP
+                    // either update or insert review data into ContentProvider
+                    saveMovieReviewDtl(movieReviewValues);
+                }
 
                 // TRAILERS
                 JSONObject movieTrailerObj = movieDtlObj.getJSONObject(MOVIE_API_TRAILERS);
                 JSONArray movieTrailerArray = movieTrailerObj.getJSONArray(VIDEO_API_YOUTUBE);
+                Log.d(TAG, "trailer count:" + movieTrailerArray.length());
                 for (int i = 0; i < movieTrailerArray.length(); i++) {
                     ContentValues movieTrailerValues = new ContentValues();
                     JSONObject video = movieTrailerArray.getJSONObject(i);
@@ -288,103 +308,66 @@ public class MovieService extends IntentService {
                     //    movieTrailerValues.put(MovieContract.MovieVideo.COLUMN_ISO_639_1, video.getString(VIDEO_API_ISO_639_1));
                     movieTrailerValues.put(MovieContract.MovieVideo.COLUMN_SIZE, video.getString(VIDEO_API_SIZE));
                     //Log.d(TAG, movieTrailerArray.get(i).toString());
-                    trailerCvVector.add(movieTrailerValues);
+
+                    // SAVE DATA TO CP
+                    // either update or insert review data into ContentProvider
+                    saveMovieVideoDtl(movieTrailerValues);
                 }
+
 
             } catch (JSONException je) {
                 Log.e(TAG, "Error parsing the Movie Details JSON String " + je.getMessage());
             }
-        }
-
-        // SAVE DATA TO CP
-        // either update or insert review data into ContentProvider
-        insertMovieReviewCp(reviewCvVector);
-
-        // SAVE DATA TO CP
-        // either update or insert review data into ContentProvider
-        insertMovieVideoCp(trailerCvVector);
-
     }
 
     // TODO" Redo method insertOrUpdateReviewCp.  probably want to completely regenerate the table data each time
-    private void insertMovieReviewCp(Vector<ContentValues> values) {
-        Log.d(TAG, "insertMovieReviewCp");
-        if (values.size() > 0) {
-            ContentValues[] cvArray = new ContentValues[values.size()];
-            values.toArray(cvArray);
-
-            // if the database is empty, then do a bulkInsert,
-            // if not get the record from the CP, and either update or insert
-            Cursor rowsCollection = getContentResolver().query(MovieContract.MovieReview.CONTENT_URI, null, null, null, null, null);
-            int rowCount = rowsCollection.getCount();
-            rowsCollection.close();
-            if (rowCount > 0) {
-     //           getContentResolver().delete(MovieContract.MovieReview.CONTENT_URI, null, null);
-                for ( ContentValues cv : cvArray ) {
-                    int movieId = cv.getAsInteger(MovieContract.MovieReview.COLUMN_MOVIE_ID);
-                    String[] whereArgs = new String[1];
-                    whereArgs[0] = Integer.toString(movieId);
-                    Cursor row =  getContentResolver().query(
-                            MovieContract.MovieReview.buildReviewUriByMovieId(movieId),
-                            null,
-                            MovieContract.MovieReview.COLUMN_MOVIE_ID + " = ?",
-                            whereArgs,
-                            null
-                    );
-                    if (row != null) {
-                        //Log.d(TAG, "movie id  '" + movieId + "' exists in the CP");
-                        getContentResolver().update(MovieContract.MovieReview.CONTENT_URI, cv, MovieContract.MovieReview.COLUMN_MOVIE_ID + " = ?", whereArgs);
-                    } else {
-                        //Log.d(TAG, "movie id '" + movieId + " ' does not exist in CP");
-                        getContentResolver().insert(MovieContract.MovieReview.CONTENT_URI, cv);
-                    }
-                    row.close();
-                }
-            } else {
-                int inserted = 0;
-                inserted = getContentResolver().bulkInsert(MovieContract.MovieReview.CONTENT_URI, cvArray);
-                //Log.d(TAG, "number of records inserted: " + inserted);
-            }
+    private void saveMovieReviewDtl(ContentValues values) {
+        Log.d(TAG, "saveMovieReviewDtl");
+        if (values != null ) {
+            int movieId = values.getAsInteger(MovieContract.MovieReview.COLUMN_MOVIE_ID);
+            String[] whereArgs = new String[1];
+            whereArgs[0] = Integer.toString(movieId);
+            // if the objects exists in db, then update it.   Otherwise, insert the object
+            Cursor row =  getContentResolver().query(
+                    MovieContract.MovieReview.buildReviewUriByMovieId(movieId),
+                    null,
+                    MovieContract.MovieReview.COLUMN_MOVIE_ID + " = ?",
+                    whereArgs,
+                    null
+            );
+//            if (row != null && row.getCount() > 0 ) {
+                //Log.d(TAG, "movie id  '" + movieId + "' exists in the CP");
+//                getContentResolver().update(MovieContract.MovieReview.CONTENT_URI, values, MovieContract.MovieReview.COLUMN_MOVIE_ID + " = ?", whereArgs);
+//            } else {
+                //Log.d(TAG, "movie id '" + movieId + " ' does not exist in CP");
+                getContentResolver().insert(MovieContract.MovieReview.CONTENT_URI, values);
+//            }
+            if (row != null) {row.close();}
         }
     }
 
-    private void insertMovieVideoCp(Vector<ContentValues> values) {
-        Log.d(TAG, "insertMovieVideoCp");
-        if (values.size() > 0) {
-            ContentValues[] cvArray = new ContentValues[values.size()];
-            values.toArray(cvArray);
-
-            // if the database is empty, then do a bulkInsert,
-            // if not get the record from the CP, and either update or insert
-            Cursor rowsCollection = getContentResolver().query(MovieContract.MovieVideo.CONTENT_URI, null, null, null, null, null);
-            int rowCount = rowsCollection.getCount();
-            rowsCollection.close();
-            if (rowCount > 0) {
-      //          getContentResolver().delete(MovieContract.MovieVideo.CONTENT_URI, null, null);
-                for ( ContentValues cv : cvArray ) {
-                    int movieId = cv.getAsInteger(MovieContract.MovieVideo.COLUMN_MOVIE_ID);
-                    String[] whereArgs = new String[1];
-                    whereArgs[0] = Integer.toString(movieId);
-                    Cursor row =  getContentResolver().query(
-                            MovieContract.MovieVideo.buildTrailerUriByMovieId(movieId),
-                            null,
-                            MovieContract.MovieVideo.COLUMN_MOVIE_ID  + " = ?",
-                            whereArgs,
-                            null
-                    );
-                    if (row != null) {
-                        int columnIndex = row.getColumnIndex(MovieContract.MovieVideo.COLUMN_MOVIE_ID);
-                        //Log.d(TAG, "movie id  '" + movieId + "' exists in the CP as '" + Integer.toString(row.getInt(columnIndex)) + "'");
-                        getContentResolver().update(MovieContract.MovieVideo.CONTENT_URI, cv, MovieContract.MovieVideo.COLUMN_MOVIE_ID + " = ?", whereArgs);
-                    } else {
-                        //Log.d(TAG, "movie id '" + movieId + " ' does not exist in CP");
-                        getContentResolver().insert(MovieContract.MovieVideo.CONTENT_URI, cv);
-                    }
-                    row.close();
-                }
-            } else {
-                getContentResolver().bulkInsert(MovieContract.MovieVideo.CONTENT_URI, cvArray);
-            }
+    private void saveMovieVideoDtl(ContentValues values) {
+        Log.d(TAG, "saveMovieVideoDtl");
+        if (values != null) {
+            int movieId = values.getAsInteger(MovieContract.MovieVideo.COLUMN_MOVIE_ID);
+            String[] whereArgs = new String[1];
+            whereArgs[0] = Integer.toString(movieId);
+            // if the objects exists in db, then update it.   Otherwise, insert the object
+            Cursor row =  getContentResolver().query(
+                    MovieContract.MovieVideo.buildTrailerUriByMovieId(movieId),
+                    null,
+                    MovieContract.MovieVideo.COLUMN_MOVIE_ID  + " = ?",
+                    whereArgs,
+                    null
+            );
+//            if (row != null && row.getCount() > 0) {
+                //Log.d(TAG, "movie id  '" + movieId + "' exists in the CP as '" + Integer.toString(row.getInt(columnIndex)) + "'");
+//                getContentResolver().update(MovieContract.MovieVideo.CONTENT_URI, values, MovieContract.MovieVideo.COLUMN_MOVIE_ID + " = ?", whereArgs);
+//            } else {
+                //Log.d(TAG, "movie id '" + movieId + " ' does not exist in CP");
+                getContentResolver().insert(MovieContract.MovieVideo.CONTENT_URI, values);
+//            }
+            if (row != null) {row.close();}
         }
     }
     
@@ -462,29 +445,32 @@ public class MovieService extends IntentService {
             int rowCount = rows.getCount();
             rows.close();
             if (rowCount > 0) {
-                for ( ContentValues cv : cvArray ) {
-                    int movieId = cv.getAsInteger(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
-                    String[] whereArgs = new String[1];
-                    whereArgs[0] = Integer.toString(movieId);
-                    Cursor data =  getContentResolver().query(MovieContract.MovieEntry.buildMovieUriByMovieId(movieId), null, MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ?", whereArgs, null);
-                    if (data != null) {
-                   //     int idx = data.getColumnIndex(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
-                        //Log.d(TAG, "movie id  '" + movieId + "' exists in the CP");
-                        inserted = getContentResolver().update(MovieContract.MovieEntry.buildMovieUriByMovieId(movieId), cv, MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ?", whereArgs);
-                        //Log.d(TAG, "updated record" + inserted);
-                    } else {
-                        //Log.d(TAG, "movie id '" + movieId + " ' does not exist in CP");
-                        Uri record = getContentResolver().insert(MovieContract.MovieEntry.CONTENT_URI, cv);
-                        //Log.d(TAG, "inserted record" + record.toString());
-                    }
-                    data.close();
-                }
-
-            } else {
-                inserted = getContentResolver().bulkInsert(MovieContract.MovieEntry.CONTENT_URI, cvArray);
-                //Log.d(TAG, "SavingMovieData complete. " + inserted + " inserted into CP");
             }
+            inserted = getContentResolver().bulkInsert(MovieContract.MovieEntry.CONTENT_URI, cvArray);
+            Log.d(TAG, "SavingMovieData complete. " + inserted + " inserted into CP");
 
+//                for ( ContentValues cv : cvArray ) {
+//                    int movieId = cv.getAsInteger(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
+//                    String[] whereArgs = new String[1];
+//                    whereArgs[0] = Integer.toString(movieId);
+//                    Cursor data =  getContentResolver().query(MovieContract.MovieEntry.buildMovieUriByMovieId(movieId), null, MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ?", whereArgs, null);
+//                    if (data != null) {
+//                   //     int idx = data.getColumnIndex(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
+//                        //Log.d(TAG, "movie id  '" + movieId + "' exists in the CP");
+//                        inserted = getContentResolver().update(MovieContract.MovieEntry.buildMovieUriByMovieId(movieId), cv, MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ?", whereArgs);
+//                        //Log.d(TAG, "updated record" + inserted);
+//                    } else {
+//                        //Log.d(TAG, "movie id '" + movieId + " ' does not exist in CP");
+//                        Uri record = getContentResolver().insert(MovieContract.MovieEntry.CONTENT_URI, cv);
+//                        //Log.d(TAG, "inserted record" + record.toString());
+//                    }
+//                    data.close();
+//                }
+//
+//            } else {
+//                inserted = getContentResolver().bulkInsert(MovieContract.MovieEntry.CONTENT_URI, cvArray);
+//                //Log.d(TAG, "SavingMovieData complete. " + inserted + " inserted into CP");
+//            }
 
         }
 

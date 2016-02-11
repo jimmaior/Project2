@@ -35,7 +35,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import me.jimm.popularmovies2.R;
+import me.jimm.popularmovies2.Utils;
 import me.jimm.popularmovies2.data.MovieContract;
+import me.jimm.popularmovies2.models.MovieService;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -79,6 +81,7 @@ public class DetailFragment extends Fragment implements
     // members
     private int mMovieId;
     private Uri mMovieDtlByMovieIdUri;
+
     private TextView mTvTitle;
     private ImageView mIvPoster;
     private TextView mTvReleaseDate;
@@ -87,34 +90,27 @@ public class DetailFragment extends Fragment implements
     private CheckBox mCbFavorite;
     private LinearLayout mLlReviews;
     private LinearLayout mLlTrailers;
-    private HorizontalScrollView mHsvTrailers;
-
 
     // default constructor is required
     public DetailFragment() {}
 
-
     public void onActivityCreated(Bundle savedInstanceState) {
         Log.d(TAG, "onActivityCreated");
         super.onActivityCreated(savedInstanceState);
+
+        // initialize fragment members
+        mMovieId = getArguments().getInt("MOVIE_ID");
+        mMovieDtlByMovieIdUri = getArguments().getParcelable(DETAIL_URI);
+
+        // Loader
         getLoaderManager().initLoader(MOVIE_DETAIL_LOADER, null, this);
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView");
-
-        // data source depends on how we get here
-        if (getArguments() == null) {
-            Intent intent = getActivity().getIntent();
-            mMovieId = intent.getIntExtra("MOVIE_ID", 0);
-            mMovieDtlByMovieIdUri = intent.getData();
-        } else {
-            Bundle bundle = getArguments();
-            mMovieDtlByMovieIdUri = bundle.getParcelable(DetailFragment.DETAIL_URI);
-            mMovieId = bundle.getInt("MOVIE_ID");
-        }
 
         View v = inflater.inflate(R.layout.fragment_detail, container, false);
 
@@ -134,13 +130,13 @@ public class DetailFragment extends Fragment implements
                 args[0] = Integer.toString(mMovieId);
                 ContentValues contentValues = new ContentValues();
                 contentValues.put(MovieContract.MovieEntry.COLUMN_FAVORITE, b);
+                // TODO: Save the Movie Data to the CP as a Favorite
                 getActivity().getContentResolver().update(MovieContract.MovieEntry.buildMovieUriUpdateFavoriteByMovieId(mMovieId),
                         contentValues, MovieContract.MovieEntry.COLUMN_MOVIE_ID + "= ?", args);
             }
         });
 
         // Trailers
-        mHsvTrailers = (HorizontalScrollView) v.findViewById(R.id.hsv_trailers);
         mLlTrailers = (LinearLayout) v.findViewById(R.id.ll_trailers);
 
         // reviews
@@ -150,14 +146,18 @@ public class DetailFragment extends Fragment implements
     }
 
     public Loader<Cursor> onCreateLoader(int loader, Bundle args) {
+        Log.d(TAG, "onLoadCreated");
         Uri uri;
         String[] whereArgs = new String[1];
         whereArgs[0] = Integer.toString(mMovieId);
         uri = mMovieDtlByMovieIdUri;
-        return new CursorLoader(getActivity(), uri, MOVIE_COLUMNS, MovieContract.MovieEntry.COLUMN_MOVIE_ID + "= ?", whereArgs, null);
+        Log.d(TAG, "uri:" + uri);
+        return new CursorLoader(getContext(), uri, MOVIE_COLUMNS, MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ?", whereArgs, null);
+        //return new CursorLoader(getContext(), uri, MOVIE_COLUMNS, null, null, null);
     }
 
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+    Log.d(TAG, "onLoadFinished data.moveToFirst():" + data.moveToFirst());
 
         if (data.moveToFirst()) {
 
@@ -211,9 +211,8 @@ public class DetailFragment extends Fragment implements
                     reviewTxtVw.setId(i);
                     mLlReviews.addView(reviewTxtVw);
                 }
+                reviews.close();
             }
-            reviews.close();
-
 
             // Trailers
             Cursor videos = getActivity().getContentResolver().query(
@@ -241,6 +240,7 @@ public class DetailFragment extends Fragment implements
                                 .placeholder(R.drawable.placeholder107x60)
                                 .into(trailerIv);
                         trailerIv.setId(i);
+                        trailerIv.setPadding(4,4,4,4);
                         trailerIv.setTag(R.id.trailer_key, videoKey);
 
                         // image button
@@ -280,16 +280,16 @@ public class DetailFragment extends Fragment implements
 
                     }
                 }
+                videos.close();
             }
-            videos.close();
 
         }   // end if
-
-
-
     }
 
-    public void onLoaderReset(Loader<Cursor> loader) {}
+    public void onLoaderReset(Loader<Cursor> loader) {
+
+        Log.d(TAG, "onLoaderReset");
+    }
 
     // private methods
     /**

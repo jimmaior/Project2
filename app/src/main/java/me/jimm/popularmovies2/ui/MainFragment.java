@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -27,25 +28,26 @@ import me.jimm.popularmovies2.models.MovieService;
 
 public class MainFragment extends Fragment implements
         AdapterView.OnItemClickListener,
-        LoaderManager.LoaderCallbacks<Cursor>{
+         LoaderManager.LoaderCallbacks<Cursor>{
 
 
-     private static final String TAG = MainFragment.class.getSimpleName();
+    private static final String TAG = MainFragment.class.getSimpleName();
 
     // moved to MainActivity private static String mCurrentSortOrder;
     private static int MOVIE_LOADER = 1;
     private int mPosition = GridView.INVALID_POSITION;
     private GridView mGridView;
     private MovieListAdapter mMovieListAdapter;
+    private ArrayList<Movie> mMovies;
     private ProgressBar mProgressBar;
-    private int mLastPage = 1;  // last page of data loaded, this variable is updated onScrolling
     // moved to Utuls: private static final String SORT_PREFERENCE = "sort_order_settings"; // ListPreference key
-	private static final String PERSIST_MOVIE_LIST = "movie_list";
+    private static final String PERSIST_MOVIE_LIST = "movie_list";
     private static final String PERSIST_SORT_ORDER = "current_sort_order";
     private static final String PERSIST_GRID_LIST_POSITION = "grid_list_position";
+    private static final String PERSIST_LIST_CURSOR = "list_cursor";
 
 
-    private static final String[] MOVIE_COLUMNS  = {
+    private static final String[] MOVIE_COLUMNS = {
             // TODO: modify these comments and determine if they are still relevant
             MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry._ID,
             MovieContract.MovieEntry.COLUMN_FAVORITE,
@@ -75,7 +77,9 @@ public class MainFragment extends Fragment implements
     static final int COL_VOTE_COUNT = 10;
 
 
-    /** A Callback for any Activity using this interface for communication */
+    /**
+     * A Callback for any Activity using this interface for communication
+     */
     public interface Callback {
         void onItemSelected(Uri movieDtlUri, int movieId);
     }
@@ -92,6 +96,7 @@ public class MainFragment extends Fragment implements
 
         // prepare the CursorLoader
         getLoaderManager().initLoader(MOVIE_LOADER, null, this);
+
     }
 
 
@@ -123,11 +128,12 @@ public class MainFragment extends Fragment implements
             @Override
             public boolean onLoadMore(int page, int totalItemCount) {
                 Log.d(TAG, "onLoadMore");
-                mLastPage = page;
-                updateMovieData(getActivity());
+                // mLastPage = page;
+                updateMovieData(getActivity(), page);
                 return true;
             }
         });
+
 
         // restore transient data, if exists
         if (savedInstanceState != null && savedInstanceState.containsKey(PERSIST_GRID_LIST_POSITION)) {
@@ -141,21 +147,48 @@ public class MainFragment extends Fragment implements
 
     public void onSortOrderChanged() {
         Log.d(TAG, "onSortOrderChanged");
-        // TODO: update the detail fragment too.
+        // TODO: update main fragment and if necessary, the detail fragment too.
         mMovieListAdapter.notifyDataSetChanged();
-        mLastPage = 1;
-        updateMovieData(getActivity());
+        mPosition = GridView.INVALID_POSITION;
+       // mLastPage = 1;
+        getActivity().getContentResolver().delete(MovieContract.MovieEntry.CONTENT_URI, null, null);
+        updateMovieData(getActivity(), 1);
         getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
-
     }
 
     public void showLoading(boolean visible) {
         Log.d(TAG, "showLoading");
-        if (visible == true) {
+        if (visible) {
             mProgressBar.setVisibility(View.VISIBLE);
         }
         else {
             mProgressBar.setVisibility(View.GONE);
+        }
+    }
+	
+	
+	  public void onReceiveResponse(int resultCode, Bundle resultData) {
+        Log.d(TAG, "onReceiveResponse - ResultCode:" + resultCode);
+        switch (resultCode) {
+            case MovieService.STATUS_RUNNING:
+                mProgressBar.setVisibility(View.VISIBLE);
+                break;
+            case MovieService.STATUS_FINISHED:
+                Log.d(TAG, "MovieDbApiService finished");
+                ArrayList<Movie> m = resultData.getParcelableArrayList("results");
+                mMovies.addAll(m);
+                Log.d(TAG, "mMovies.size()=" + mMovies.size());
+                mMovieListAdapter.notifyDataSetChanged();
+                mProgressBar.setVisibility(View.GONE);
+                break;
+            case MovieService.STATUS_ERROR:
+                Log.e(TAG, resultData.getString(Intent.EXTRA_TEXT));
+                Toast.makeText(getActivity(), "Error occurred while retrieving movie data." +
+                        resultData.get(Intent.EXTRA_TEXT), Toast.LENGTH_SHORT).show();
+                break;
+            default:
+                Toast.makeText(getActivity(), "Undefined return code", Toast.LENGTH_SHORT).show();
+                break;
         }
     }
 
@@ -165,6 +198,9 @@ public class MainFragment extends Fragment implements
         if (mPosition != GridView.INVALID_POSITION) {
             bundle.putInt(PERSIST_GRID_LIST_POSITION, mPosition);
         }
+//        if (mMovieListAdapter != null) {
+//            bundle.putParcelable(PERSIST_LIST_CURSOR, mMovieListAdapter.getCursor());
+//        }
 
         //      bundle.putParcelableArrayList(PERSIST_MOVIE_LIST, mMovies);
         //      bundle.putString(PERSIST_SORT_ORDER, mCurrentSortOrder);
@@ -199,7 +235,7 @@ public class MainFragment extends Fragment implements
 
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         Log.d(TAG, "onLoadFinished()");
-        showLoading(true);
+        //showLoading(true);
          mMovieListAdapter.swapCursor(data);
         showLoading(false);
 
@@ -211,18 +247,19 @@ public class MainFragment extends Fragment implements
 
     public void onLoaderReset(Loader<Cursor> loader) {
         Log.d(TAG, "onLoaderReset()");
-        showLoading(true);
+        //showLoading(true);
         mMovieListAdapter.swapCursor(null);
-        showLoading(false);
+        //showLoading(false);
     }
 
 
-    private void updateMovieData(Context context) {
+    private void updateMovieData(Context context, int loadPage) {
         Log.d(TAG, "updateMovieData");
-
+        // start the service to interact with the MovieDB API
+        // set a reference to the API Request response handler
         final Intent intent = new Intent(Intent.ACTION_SYNC, null, context, MovieService.class);
         intent.putExtra(MovieService.SORT_ORDER_EXTRA_KEY, Utils.getSortOrderPreference(getActivity()));
-        intent.putExtra("page", mLastPage);
+        intent.putExtra("page", loadPage);
         intent.putExtra("command", "get_movie_data");
         getActivity().startService(intent);
     }

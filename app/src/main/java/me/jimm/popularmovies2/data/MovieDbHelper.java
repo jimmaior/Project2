@@ -30,9 +30,9 @@ public class MovieDbHelper extends SQLiteOpenHelper {
                 MovieEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 MovieEntry.COLUMN_FAVORITE + " INTEGER NOT NULL, " +       /* 0 is false, 1 is true */
                 MovieEntry.COLUMN_BACKDROP_PATH + " TEXT NO NULL, " +
-                MovieEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
+                MovieEntry.COLUMN_MOVIE_ID + " TEXT NOT NULL, " +
                 MovieEntry.COLUMN_OVERVIEW + " TEXT NOT NULL, " +
-                MovieEntry.COLUMN_POPULARITY + " TEXT NOT NULL, " +
+                MovieEntry.COLUMN_POPULARITY + " REAL NOT NULL, " +
                 MovieEntry.COLUMN_POSTER_PATH + " TEXT NOT NULL, " +
                 MovieEntry.COLUMN_RELEASE_DATE + " INTEGER NOT NULL, " +
                 MovieEntry.COLUMN_TITLE + " TEXT NOT NULL, " +
@@ -47,7 +47,7 @@ public class MovieDbHelper extends SQLiteOpenHelper {
                 MovieReview.COLUMN_CONTENT + " TEXT NOT NULL, " +
                 MovieReview.COLUMN_URL + " TEXT NOT NULL, " +
                 MovieReview.COLUMN_REVIEW_ID + " TEXT NOT NULL, " +
-                MovieReview.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
+                MovieReview.COLUMN_MOVIE_ID + " TEXT NOT NULL, " +
                 " FOREIGN KEY (" + MovieReview.COLUMN_MOVIE_ID + ") REFERENCES " +
                 MovieEntry.TABLE_NAME + " (" + MovieEntry.COLUMN_MOVIE_ID + ") " +
                 " );";
@@ -79,7 +79,7 @@ public class MovieDbHelper extends SQLiteOpenHelper {
         // this database is only a cache for online data, so its upgrade policy
         // is to discard the data and start over.
         // Note: this method only fires when I update the version number of the database.
-        // To update the schema without modifying the database, then comment out the next two lines
+        // To update the schema without modifying the database, then comment out these lines
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + MovieReview.TABLE_NAME);
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + MovieVideo.TABLE_NAME);
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + MovieEntry.TABLE_NAME);
