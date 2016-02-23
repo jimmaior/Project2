@@ -1,10 +1,8 @@
 package me.jimm.popularmovies2.ui;
 
-import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -12,22 +10,24 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.RelativeLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
@@ -35,9 +35,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import me.jimm.popularmovies2.R;
-import me.jimm.popularmovies2.Utils;
 import me.jimm.popularmovies2.data.MovieContract;
-import me.jimm.popularmovies2.models.MovieService;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -64,8 +62,7 @@ public class DetailFragment extends Fragment implements
             MovieContract.MovieEntry.COLUMN_VOTE_COUNT,
     };
 
-    // these indices are tied to MOVIE_COLUMNS.
-    // If MOVIE_COLUMNS changes, these must change too
+    // MOVIE_COLUMNS indices.
     static final int COL__ID = 0;
     static final int COL_FAVORITE = 1;
     static final int COL_BACKDROP_PATH = 2;
@@ -79,8 +76,8 @@ public class DetailFragment extends Fragment implements
     static final int COL_VOTE_COUNT = 10;
 
     // members
-    private int mMovieId;
-    private Uri mMovieDtlByMovieIdUri;
+    private int mMovieId = 0;
+    private Uri mMovieDtlByMovieIdUri = null;
 
     private TextView mTvTitle;
     private ImageView mIvPoster;
@@ -90,22 +87,69 @@ public class DetailFragment extends Fragment implements
     private CheckBox mCbFavorite;
     private LinearLayout mLlReviews;
     private LinearLayout mLlTrailers;
+    private ShareActionProvider mShareActionProvider;
+
+    public interface Callback {
+        void onFavoriteClick(int movieId, boolean checkState);
+    }
 
     // default constructor is required
     public DetailFragment() {}
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // has Action items on ActionBar
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+
+        inflater.inflate(R.menu.menu_detail, menu);
+
+        // initialize the share action provider
+        MenuItem shareMenuItem = menu.findItem(R.id.action_share);
+        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(shareMenuItem);
+
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Log.d(TAG, "onOptionsItemSelected");
+       int itemId = item.getItemId();
+
+        switch (itemId) {
+            case (R.id.action_share): {
+                Log.d(TAG, "onOptionItemSelected - Action_Share");
+                shareMovieUrl();
+            break;
+            }
+            default: {
+                break;
+            }
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         Log.d(TAG, "onActivityCreated");
         super.onActivityCreated(savedInstanceState);
 
         // initialize fragment members
-        mMovieId = getArguments().getInt("MOVIE_ID");
-        mMovieDtlByMovieIdUri = getArguments().getParcelable(DETAIL_URI);
-
+        if (getArguments() != null ) {
+            mMovieId = getArguments().getInt("MOVIE_ID");
+            mMovieDtlByMovieIdUri = getArguments().getParcelable(DETAIL_URI);
+        } else {
+            mMovieId = 0;
+            mMovieDtlByMovieIdUri = MovieContract.MovieEntry.buildMovieUriByMovieId(mMovieId);
+        }
         // Loader
         getLoaderManager().initLoader(MOVIE_DETAIL_LOADER, null, this);
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -121,18 +165,12 @@ public class DetailFragment extends Fragment implements
         mTvOverview = (TextView) v.findViewById(R.id.tv_overview);
         mCbFavorite = (CheckBox) v.findViewById(R.id.cb_favorite);
 
-        // Favorites Checkbox
-        mCbFavorite.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        mCbFavorite.setOnClickListener(new CompoundButton.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                Log.d(TAG, "compoundButton state:" + compoundButton.isChecked() + "; b:" + b);
-                String[] args = new String[1];
-                args[0] = Integer.toString(mMovieId);
-                ContentValues contentValues = new ContentValues();
-                contentValues.put(MovieContract.MovieEntry.COLUMN_FAVORITE, b);
-                // TODO: Save the Movie Data to the CP as a Favorite
-                getActivity().getContentResolver().update(MovieContract.MovieEntry.buildMovieUriUpdateFavoriteByMovieId(mMovieId),
-                        contentValues, MovieContract.MovieEntry.COLUMN_MOVIE_ID + "= ?", args);
+            public void onClick(View view) {
+                CompoundButton compoundButton = (CompoundButton) view;
+                Log.d(TAG, "onCheckedChanged: compoundButton state:" + compoundButton.isChecked());
+                ((Callback) getActivity()).onFavoriteClick(mMovieId, compoundButton.isChecked());
             }
         });
 
@@ -145,19 +183,29 @@ public class DetailFragment extends Fragment implements
         return v;
     }
 
+    public void updateDetailView(int movieId) {
+        Log.d(TAG, "updateDetailView");
+        mMovieId = movieId;
+        mMovieDtlByMovieIdUri = MovieContract.MovieEntry.buildMovieUriByMovieId(mMovieId);
+        getLoaderManager().restartLoader(MOVIE_DETAIL_LOADER, null, this);
+    }
+
     public Loader<Cursor> onCreateLoader(int loader, Bundle args) {
-        Log.d(TAG, "onLoadCreated");
+        Log.d(TAG, "onCreateLoader");
         Uri uri;
         String[] whereArgs = new String[1];
         whereArgs[0] = Integer.toString(mMovieId);
         uri = mMovieDtlByMovieIdUri;
-        Log.d(TAG, "uri:" + uri);
+        Log.d(TAG, "creating a loader for uri:" + uri);
         return new CursorLoader(getContext(), uri, MOVIE_COLUMNS, MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ?", whereArgs, null);
-        //return new CursorLoader(getContext(), uri, MOVIE_COLUMNS, null, null, null);
     }
 
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-    Log.d(TAG, "onLoadFinished data.moveToFirst():" + data.moveToFirst());
+    Log.d(TAG, "onLoadFinished data loaded?:" + data.moveToFirst());
+    Log.d(TAG, "onLoadFinished data column count:" + data.getColumnCount());
+        if (data.getColumnCount() > 0) {
+            Log.d(TAG, "onLoadFinished data column name:" + data.getColumnName(0));
+        }
 
         if (data.moveToFirst()) {
 
@@ -196,19 +244,25 @@ public class DetailFragment extends Fragment implements
             whereArgs[0] = Integer.toString(movieId);
             Cursor reviews = getActivity().getContentResolver().query(
                     MovieContract.MovieReview.buildReviewUriByMovieId(movieId),
-                    null, MovieContract.MovieReview.COLUMN_MOVIE_ID + "= ?", whereArgs, null);
-            //DatabaseUtils.dumpCursor(reviews);
+                    null, MovieContract.MovieReview.COLUMN_MOVIE_ID + " = ?", whereArgs, null);
             if (reviews != null) {
                 int reviewCount = reviews.getCount();
                 reviews.moveToFirst();
                 for (int i = 0; i < reviewCount; i++, reviews.moveToNext()) {
+                    String content;
+                    String author;
                     int contentIdx = reviews.getColumnIndex(MovieContract.MovieReview.COLUMN_CONTENT);
-                    // TODO: Add Authors to the Review View
                     int authorIdx = reviews.getColumnIndex(MovieContract.MovieReview.COLUMN_AUTHOR);
+                    author = reviews.getString(authorIdx) + " writes: ";
+                    content = reviews.getString(contentIdx);
+                    TextView authorTxtVw = new TextView(getActivity());
+                    authorTxtVw.setText(author);
+                    authorTxtVw.setTextColor(getResources().getColor(R.color.colorAccent));
                     TextView reviewTxtVw = new TextView(getActivity());
-                    reviewTxtVw.setText(reviews.getString(contentIdx));
+                    reviewTxtVw.setText(content);
                     reviewTxtVw.setTextColor(Color.WHITE);
                     reviewTxtVw.setId(i);
+                    mLlReviews.addView(authorTxtVw);
                     mLlReviews.addView(reviewTxtVw);
                 }
                 reviews.close();
@@ -217,8 +271,7 @@ public class DetailFragment extends Fragment implements
             // Trailers
             Cursor videos = getActivity().getContentResolver().query(
                     MovieContract.MovieVideo.buildTrailerUriByMovieId(movieId),
-                    null, MovieContract.MovieVideo.COLUMN_MOVIE_ID + "=?", whereArgs, null);
-            //DatabaseUtils.dumpCursor(videos);
+                    null, MovieContract.MovieVideo.COLUMN_MOVIE_ID + " = ?", whereArgs, null);
             if (videos != null) {
                 int videoCount = videos.getCount();
                 videos.moveToFirst();
@@ -245,8 +298,6 @@ public class DetailFragment extends Fragment implements
 
                         // image button
                         ImageButton playTrailerBtn = new ImageButton(getActivity());
-                        playTrailerBtn.setId(i);
-
                         RelativeLayout.LayoutParams layoutParams = new
                                 RelativeLayout.LayoutParams(
                                 RelativeLayout.LayoutParams.WRAP_CONTENT,
@@ -272,16 +323,15 @@ public class DetailFragment extends Fragment implements
                                 }
                             }
                         });
-
                         trailerLayout.addView(trailerIv);
                         trailerLayout.addView(playTrailerBtn);
-
                         mLlTrailers.addView(trailerLayout);
-
                     }
                 }
                 videos.close();
             }
+
+            if (!data.isClosed()) {data.close(); }
 
         }   // end if
     }
@@ -316,6 +366,34 @@ public class DetailFragment extends Fragment implements
             Log.e(TAG, pe.getMessage());
         }
         return year;
+    }
+
+    private String getVideoUrl(int position) {
+        String key;
+        if (mLlTrailers.getChildCount() > 0) {
+            RelativeLayout trailerLayout = (RelativeLayout) mLlTrailers.getChildAt(position);
+            //ImageView imageView = (ImageView) trailerLayout.findViewById(position);
+            ImageView imageView = (ImageView) trailerLayout.getChildAt(position);
+            key = imageView.getTag(R.id.trailer_key).toString();
+            return "https://www.youtube.com/watch?v=" + key;
+        } else {
+            return null;
+        }
+    }
+
+    private void shareMovieUrl() {
+        Log.d(TAG, "shareMovieUrl");
+        String url;
+        url = getVideoUrl(0);
+        if (url != null ) {
+            Intent intent = new Intent();
+            intent.setType("text/plain");
+            intent.setAction(Intent.ACTION_SEND);
+            intent.putExtra(Intent.EXTRA_TEXT, url);
+            mShareActionProvider.setShareIntent(intent);
+        } else {
+            Toast.makeText(getActivity(), "Error: Could not retrieve the trailer url.", Toast.LENGTH_SHORT).show();
+        }
     }
 
 }

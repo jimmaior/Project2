@@ -19,7 +19,6 @@ public abstract class EndlessScrollListener implements AbsListView.OnScrollListe
     private int mPreviousTotal = 0;         // item count in dataset after last load
     private boolean mIsLoading = true;      // status while loading
 
-
     public EndlessScrollListener() {}
 
     public EndlessScrollListener(int visibleThreshold) {

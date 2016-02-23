@@ -38,7 +38,7 @@ public class MovieListAdapter extends CursorAdapter {
     // creates the view, which are recycled by Android
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        //Log.d(TAG, "newView");
+       // Log.d(TAG, "newView");
         ImageView imageView = new ImageView(context);
 
         return imageView;

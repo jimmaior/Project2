@@ -1,5 +1,7 @@
 package me.jimm.popularmovies2.ui;
 
+
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -9,24 +11,28 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.GridView;
 
 import me.jimm.popularmovies2.R;
 import me.jimm.popularmovies2.Utils;
 import me.jimm.popularmovies2.data.MovieContract;
 import me.jimm.popularmovies2.models.MovieService;
 
-public class MainActivity extends AppCompatActivity implements MainFragment.Callback {
+public class MainActivity extends AppCompatActivity implements
+        MainFragment.Callback, DetailFragment.Callback, MainFragment.OnMoviesLoaderFinished {
 
     /**
      * Member Variables
      */
 
     private final String TAG = MainActivity.class.getSimpleName();
-    private static final String DETAIL_FRAGMENT = "DETAIL_FRAGMENT";
-    private static final String MAIN_FRAGMENT = "MAIN_FRAGMENT";
+    private static final String TAG_DETAIL_FRAGMENT = "TAG_DETAIL_FRAGMENT";
+    private static final int DETAIL_REQUEST_CODE = 100;
+    private static final int INIT_DETAIL_REQUEST_CODE = 200;
     private boolean mTwoPane;
     private static String mCurrentSortOrder;
-
+    private int mMovieId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +44,9 @@ public class MainActivity extends AppCompatActivity implements MainFragment.Call
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        if (savedInstanceState == null) {
+            init();
+        }
 
         // check if the activity is using a layout which will contain two fragments
         if (findViewById(R.id.fragment_detail_container) != null) {
@@ -48,55 +57,15 @@ public class MainActivity extends AppCompatActivity implements MainFragment.Call
 
                 // build and init detail fragment
                 DetailFragment fragment = new DetailFragment();
-                String sortOrder = "favorite DESC, popularity DESC";
-                Cursor c = getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI, null, null, null, sortOrder);
-                int movieIdColIdx = c.getColumnIndex(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
-                c.moveToFirst();
-                int movieId = c.getInt(movieIdColIdx);
-                Uri uri = MovieContract.MovieEntry.buildMovieUriByMovieId(movieId);
-                Bundle bundle = new Bundle();
-                bundle.putParcelable(DetailFragment.DETAIL_URI, uri);
-                bundle.putInt("MOVIE_ID", movieId);
-                fragment.setArguments(bundle);
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_detail_container, fragment, DETAIL_FRAGMENT)
+                        .replace(R.id.fragment_detail_container, fragment, TAG_DETAIL_FRAGMENT)
                         .commit();
-                // init activity
-                mCurrentSortOrder = Utils.getSortOrderPreference(this);
             }
         }
         else {
             mTwoPane = false;
-                if (savedInstanceState == null) {
-                    mCurrentSortOrder = Utils.getSortOrderPreference(this);
-                }
-//            if (savedInstanceState == null) {
-//                // add the fragment which contains the primary UI.
-//                MainFragment mainFragment = new MainFragment();
-//                getSupportFragmentManager().beginTransaction()
-//                        .add(R.id.fragment_container, mainFragment, MAIN_FRAGMENT)
-//                        .commit();
-//            }
+
         }
-
-
-        if (savedInstanceState == null) {
-            Log.d(TAG, "initialize data");
-
-            // clean up cache
-            getContentResolver().delete(MovieContract.MovieEntry.CONTENT_URI, null, null);
-            getContentResolver().delete(MovieContract.MovieReview.CONTENT_URI, null, null);
-            getContentResolver().delete(MovieContract.MovieVideo.CONTENT_URI, null, null);
-
-            // init data load from Movie Service
-            final Intent intent = new Intent(Intent.ACTION_SYNC, null, this, MovieService.class);
-            intent.putExtra("sort_by", Utils.getSortOrderPreference(this));
-            intent.putExtra("page", 1);
-            intent.putExtra("command", "get_movie_data");
-            startService(intent);
-        }
-
-
     }
 
     @Override
@@ -126,6 +95,52 @@ public class MainActivity extends AppCompatActivity implements MainFragment.Call
     }
 
     @Override
+    public void onItemSelected(int movieId) {
+        Log.d(TAG, "onItemSelected - populate movie detail cache with data for movieId:" + movieId);
+        Intent movieDetailIntent = new Intent(this, MovieService.class);
+        PendingIntent pendingMovieDetails = createPendingResult(DETAIL_REQUEST_CODE, movieDetailIntent, 0);
+        movieDetailIntent.putExtra("movie_id", movieId);
+        movieDetailIntent.putExtra("command", "get_movie_detail_data");
+        movieDetailIntent.putExtra(MovieService.PENDING_RESULT, pendingMovieDetails);
+        startService(movieDetailIntent);
+    }
+
+    @Override
+    public void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        Log.d(TAG, "onActivityResult");
+
+        if (req == DETAIL_REQUEST_CODE && res == MovieService.RESULT_CODE) {
+            //int movieId = data.getIntExtra("movie_id", 0);
+            mMovieId = data.getIntExtra("movie_id", 0);
+            Log.d(TAG, "movie_id:" + mMovieId);
+
+            Uri uri = MovieContract.MovieEntry.buildMovieUriByMovieId(mMovieId);
+
+            if (mTwoPane) {
+                // show movie details in this activity, by adding/replacing the detail fragment
+				Log.d(TAG, "Show movie details for two pange");
+                Bundle args = new Bundle();
+                args.putParcelable(DetailFragment.DETAIL_URI, uri);
+            	args.putInt("MOVIE_ID", mMovieId);
+                DetailFragment fragment = new DetailFragment();
+                fragment.setArguments(args);
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_detail_container, fragment, TAG_DETAIL_FRAGMENT)
+                        .commit();
+            }
+            else {
+                Intent intent = new Intent(this, DetailActivity.class);
+                intent.putExtra("MOVIE_ID", mMovieId);
+                intent.setData(uri);
+                startActivity(intent);
+            }
+         } else {
+            Log.d(TAG, "onActivityResult: req/res not matching");
+        }
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
@@ -138,16 +153,17 @@ public class MainActivity extends AppCompatActivity implements MainFragment.Call
                 startActivity(new Intent(this, SettingsActivity.class));
                 break;
             }
-            case (R.id.action_share): {
-                // TODO: launch a Share Intent FROM DETAIL FRAGMENT!!!!!
-                // http://developer.android.com/training/sharing/send.html and
-                // http://stackoverflow.com/questions/574195/android-youtube-app-play-video-intent
-
-                //startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=cxLG2wtE7TM")));
-                Log.d(TAG, "onOptionItemSelected - Action_Share");
+            case (R.id.action_movies): {
+                Log.d(TAG, "onOptionItemSelected - Action_Movies");
+                showAllMovies();
+                //init();
                 break;
             }
-            default: {
+            case (R.id.action_favorite): {
+                Log.d(TAG, "onOptionItemSelected - Action_Favorite");
+                showFavoriteMovies();
+                break;
+            } default: {
                 break;
             }
         }
@@ -155,32 +171,51 @@ public class MainActivity extends AppCompatActivity implements MainFragment.Call
     }
 
     @Override
-    public void onItemSelected(Uri contentUri, int movieId) {
-        Log.d(TAG, "onItemSelected - movieId:" + movieId + "; contentUri:" + contentUri.toString());
+    public void onFavoriteClick(int movieId, boolean newCheckState) {
+        Log.d(TAG, "onFavoriteClick");
+        Utils.handleOnFavoriteClick(this, movieId, newCheckState);
+    }
 
-        Intent movieDetailIntent =  new Intent(Intent.ACTION_SYNC, null, this, MovieService.class);
-        movieDetailIntent.putExtra("movie_id", movieId);
-        movieDetailIntent.putExtra("page", 1);
-        movieDetailIntent.putExtra("command", "get_movie_detail_data");
-        startService(movieDetailIntent);
-
+    @Override
+    public void onMoviesLoaded(int movieId) {
+        DetailFragment detailFragment = (DetailFragment)
+                getSupportFragmentManager().findFragmentByTag(TAG_DETAIL_FRAGMENT);
 
         if (mTwoPane) {
-            // show movie details in this activity, by adding/replacing the detail fragment
+            detailFragment.updateDetailView(movieId);
+        } else {
+            // do nothing
+        }
+    }
+
+    private void showFavoriteMovies() {
+        Log.d(TAG, "showFavoriteMovies");
+        MainFragment fragment = (MainFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_main);
+        if (fragment != null ) {
             Bundle args = new Bundle();
-            args.putParcelable(DetailFragment.DETAIL_URI, contentUri);
-            args.putInt("MOVIE_ID", movieId);
-            DetailFragment fragment = new DetailFragment();
-            fragment.setArguments(args);
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_detail_container, fragment, DETAIL_FRAGMENT)
-                    .commit();
+            args.putString("target_uri", "favorites");
+            fragment.getFavoriteMovies();
         }
-        else {
-            Intent intent = new Intent(this, DetailActivity.class);
-            intent.putExtra("MOVIE_ID", movieId);
-            intent.setData(contentUri);
-            startActivity(intent);
+    }
+
+    private void showAllMovies() {
+        Log.d(TAG, "showAllMovies");
+        MainFragment fragment = (MainFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_main);
+        if (fragment != null ) {
+            Bundle args = new Bundle();
+            args.putString("target_uri", "favorites");
+            fragment.getAllMovies();
         }
+    }
+
+    private void init() {
+        Log.d(TAG, "init");
+        // init data load from Movie Service
+        Intent movieInitIntent = new Intent(Intent.ACTION_SYNC, null, this, MovieService.class);
+        movieInitIntent.putExtra("sort_by", Utils.getSortOrderPreference(this));
+        movieInitIntent.putExtra("page", 1);
+        movieInitIntent.putExtra("command", "init_movie_data_and_detail");
+        startService(movieInitIntent);
+
     }
 }

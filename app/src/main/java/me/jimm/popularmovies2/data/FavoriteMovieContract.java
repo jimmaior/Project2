@@ -18,9 +18,9 @@ public class FavoriteMovieContract {
     public static final Uri BASE_CONTENT_URI =Uri.parse("content://" + CONTENT_AUTHORITY);
 
     // paths
-    public static final String PATH_MOVIE = "fav_movie_entry";
-    public static final String PATH_REVIEW = "fav_movie_review";
-    public static final String PATH_VIDEO = "fav_movie_video";
+    public static final String PATH_FAV_MOVIE = "fav_movie_entry";
+    public static final String PATH_FAV_MOVIE_REVIEW = "fav_movie_review";
+    public static final String PATH_FAV_MOVIE_VIDEO = "fav_movie_video";
 
 
     /* Inner Class to define the table contents of the Movie Table */
@@ -28,13 +28,13 @@ public class FavoriteMovieContract {
 
         // CONTENT_URI
         public static final Uri CONTENT_URI = BASE_CONTENT_URI
-                .buildUpon().appendPath(PATH_MOVIE).build();
+                .buildUpon().appendPath(PATH_FAV_MOVIE).build();
 
         // CONTENT_TYPE
         public static final String CONTENT_DIR_TYPE =
-                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAV_MOVIE;
         public static final String CONTENT_ITEM_TYPE =
-                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAV_MOVIE;
 
         // Table Name
         public static final String TABLE_NAME = "fav_movie_entry";
@@ -52,39 +52,41 @@ public class FavoriteMovieContract {
         public static final String COLUMN_VOTE_COUNT = "vote_count";
 
 
-        public static Uri buildMovieUri(long id) {
+        // content://me.jimm.popularmovies2/fav_movie_entry/id=?
+        public static Uri buildFavMovieUriById(long id) {
 
             return ContentUris.withAppendedId(FavMovieEntry.CONTENT_URI, id);
         }
 
-        public static Uri buildMovieUriByMovieId(int movieId) {
+        // content://me.jimm.popularmovies2/fav_movie_entry/#
+        public static Uri buildFavMovieUriByMovieId(int movieId) {
 
-            return CONTENT_URI.buildUpon().appendPath( Integer.toString(movieId)).build();
+            return CONTENT_URI.buildUpon().appendPath(Integer.toString(movieId)).build();
         }
 
-        public static Uri buildMovieListUri() {
+        //// content://me.jimm.popularmovies2/fav_movie_entry
+        public static Uri buildFavMovieListUri() {
+
             return FavMovieEntry.CONTENT_URI;
+
         }
 
-        public static Uri buildMovieUriUpdateFavoriteByMovieId(int movieId) {
-            return CONTENT_URI.buildUpon().appendPath(Integer.toString(movieId)).appendPath("favorite").build();
-        }
     }
 
-    /* Inner class to define the reviews associated with a movie */
+    /** Inner class to define the reviews associated with a movie */
     public static final class FavMovieReview implements BaseColumns {
 
         // CONTENT_URI
         public static final Uri CONTENT_URI = BASE_CONTENT_URI
                 .buildUpon()
-                .appendPath(PATH_REVIEW)
+                .appendPath(PATH_FAV_MOVIE_REVIEW)
                 .build();
 
         // CONTENT_TYPE
         public static final String CONTENT_DIR_TYPE =
-                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_REVIEW;
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAV_MOVIE_REVIEW;
         public static final String CONTENT_ITEM_TYPE =
-                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_REVIEW;;
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAV_MOVIE_REVIEW;;
 
         // TABLE NAME
         public static final String  TABLE_NAME = "fav_movie_review";
@@ -96,12 +98,14 @@ public class FavoriteMovieContract {
         public static final String COLUMN_URL = "url";
         public static final String COLUMN_MOVIE_ID = "movie_id";
 
-        public static Uri buildReviewUri(long id) {
+        // content://me.jimm.popularmovies2/fav_movie_review/id=?
+        public static Uri buildFavMovieReviewUri(long id) {
 
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
-        public static Uri buildReviewUriByMovieId(int movieId) {
+        // content://me.jimm.popularmovies2/fav_movie_review/#/reviews
+        public static Uri buildFavMovieReviewUriByMovieId(int movieId) {
             return FavMovieReview.CONTENT_URI
                     .buildUpon().appendPath(Integer.toString(movieId)).appendPath("reviews").build();
         }
@@ -113,14 +117,14 @@ public class FavoriteMovieContract {
         // CONTENT_URI
         public static final Uri CONTENT_URI = BASE_CONTENT_URI
                 .buildUpon()
-                .appendPath(PATH_VIDEO)
+                .appendPath(PATH_FAV_MOVIE_VIDEO)
                 .build();
 
         // CONTENT_TYPE
         public static final String CONTENT_DIR_TYPE =
-                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_VIDEO;
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAV_MOVIE_VIDEO;
         public static final String CONTENT_ITEM_TYPE =
-                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_VIDEO;;
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAV_MOVIE_VIDEO;;
 
         // TABLE NAME
         public static final String  TABLE_NAME = "fav_movie_video";
@@ -135,11 +139,13 @@ public class FavoriteMovieContract {
         public static final String COLUMN_VIDEO_ID = "video_id";
         public static final String COLUMN_MOVIE_ID = "movie_id";
 
+        // content://me.jimm.popularmovies2/fav_movie_video/id=?
         public static Uri buildVideoUri(long id) {
 
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
+        // content://me.jimm.popularmovies2/fav_movie_video/#/trailer
         public static Uri buildTrailerUriByMovieId(int movieId) {
             return FavMovieVideo.CONTENT_URI
                     .buildUpon().appendPath(Integer.toString(movieId)).appendPath("trailer").build();

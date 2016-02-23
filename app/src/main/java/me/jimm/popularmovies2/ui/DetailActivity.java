@@ -8,10 +8,10 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 
 import me.jimm.popularmovies2.R;
-import me.jimm.popularmovies2.data.MovieContract;
-import me.jimm.popularmovies2.models.MovieService;
+import me.jimm.popularmovies2.Utils;
 
-public class DetailActivity extends AppCompatActivity {
+public class DetailActivity extends AppCompatActivity implements
+        DetailFragment.Callback, MainFragment.OnMoviesLoaderFinished {
 
     private static final String DETAIL_FRAGMENT_TAG = "detail";
     private static final String TAG = DetailActivity.class.getSimpleName();
@@ -24,6 +24,7 @@ public class DetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
+
       //  setContentView(R.layout.activity_main);
         setContentView(R.layout.activity_detail);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -35,20 +36,32 @@ public class DetailActivity extends AppCompatActivity {
         mMovieId = intentFromMainActivity.getIntExtra("MOVIE_ID", 0);
         mMovieDtlByMovieIdUri =  intentFromMainActivity.getData();
 
+        if (savedInstanceState == null) {
+            // create a new fragment to be placed in the activity layout
+            DetailFragment detailFragment = new DetailFragment();
 
-        // create a new fragment to be placed in the activity layout
-        DetailFragment detailFragment = new DetailFragment();
+            // this activity was started to display detailed movie data, so we need to get that
+            // data and pass it to the detail fragment as an argument
+            Bundle args = new Bundle();
+            args.putParcelable(DetailFragment.DETAIL_URI, mMovieDtlByMovieIdUri);
+            args.putInt("MOVIE_ID", mMovieId);
+            detailFragment.setArguments(args);
 
-        // this activity was started to display detailed movie data, so we need to get that
-        // data and pass it to the detail fragment as an argument
-        Bundle args = new Bundle();
-        args.putParcelable(DetailFragment.DETAIL_URI, mMovieDtlByMovieIdUri);
-        args.putInt("MOVIE_ID", mMovieId);
-        detailFragment.setArguments(args);
+            // add the fragment to the fragment manager
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.fragment_detail_container, detailFragment, DETAIL_FRAGMENT_TAG)
+                    .commit();
+        }
+    }
 
-        // add the fragment to the fragment manager
-        getSupportFragmentManager().beginTransaction()
-                .add(R.id.fragment_detail_container, detailFragment, DETAIL_FRAGMENT_TAG)
-                .commit();
+    @Override
+    public void onFavoriteClick(int movieId, boolean newCheckState) {
+        Log.d(TAG, "onFavoriteClick");
+        Utils.handleOnFavoriteClick(this, movieId, newCheckState);
+    }
+
+    @Override
+    public void onMoviesLoaded(int movieId) {
+        // do nothing
     }
 }

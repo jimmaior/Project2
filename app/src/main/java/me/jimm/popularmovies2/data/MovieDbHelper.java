@@ -7,6 +7,9 @@ import android.database.sqlite.SQLiteOpenHelper;
 import  me.jimm.popularmovies2.data.MovieContract.MovieEntry;
 import  me.jimm.popularmovies2.data.MovieContract.MovieReview;
 import  me.jimm.popularmovies2.data.MovieContract.MovieVideo;
+import  me.jimm.popularmovies2.data.FavoriteMovieContract.FavMovieEntry;
+import  me.jimm.popularmovies2.data.FavoriteMovieContract.FavMovieReview;
+import  me.jimm.popularmovies2.data.FavoriteMovieContract.FavMovieVideo;
 
 
 /**
@@ -46,18 +49,17 @@ public class MovieDbHelper extends SQLiteOpenHelper {
                 MovieReview.COLUMN_AUTHOR + " TEXT NOT NULL, " +
                 MovieReview.COLUMN_CONTENT + " TEXT NOT NULL, " +
                 MovieReview.COLUMN_URL + " TEXT NOT NULL, " +
-                MovieReview.COLUMN_REVIEW_ID + " TEXT NOT NULL, " +
+                MovieReview.COLUMN_REVIEW_ID + " TEXT UNIQUE NOT NULL, " +
                 MovieReview.COLUMN_MOVIE_ID + " TEXT NOT NULL, " +
                 " FOREIGN KEY (" + MovieReview.COLUMN_MOVIE_ID + ") REFERENCES " +
                 MovieEntry.TABLE_NAME + " (" + MovieEntry.COLUMN_MOVIE_ID + ") " +
                 " );";
 
-
         final String SQL_CREATE_VIDEO_TABLE =
             "CREATE TABLE " + MovieVideo.TABLE_NAME + " (" +
                 MovieVideo._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 MovieVideo.COLUMN_ISO_639_1 + " TEXT, " +
-                MovieVideo.COLUMN_KEY + " TEXT, " +
+                MovieVideo.COLUMN_KEY + " TEXT UNIQUE, " +
                 MovieVideo.COLUMN_NAME + " TEXT NOT NULL, " +
                 MovieVideo.COLUMN_SITE +  " TEXT, " +
                 MovieVideo.COLUMN_SIZE + " TEXT NOT NULL, " +

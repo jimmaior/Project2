@@ -66,6 +66,10 @@ public class MovieContract {
             return MovieEntry.CONTENT_URI;
         }
 
+        public static Uri buildFavoriteMovieListUri() {
+            return MovieEntry.CONTENT_URI.buildUpon().appendPath("favorite").build();
+        }
+
         public static Uri buildMovieUriUpdateFavoriteByMovieId(int movieId) {
             return CONTENT_URI.buildUpon().appendPath(Integer.toString(movieId)).appendPath("favorite").build();
         }
@@ -97,8 +101,12 @@ public class MovieContract {
         public static final String COLUMN_MOVIE_ID = "movie_id";
 
         public static Uri buildReviewUri(long id) {
-
             return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static Uri buildReviewUriByReviewId(String reviewId) {
+            return MovieReview.CONTENT_URI
+                    .buildUpon().appendPath(reviewId).appendPath("review_id").build();
         }
 
         public static Uri buildReviewUriByMovieId(int movieId) {
@@ -143,6 +151,11 @@ public class MovieContract {
         public static Uri buildTrailerUriByMovieId(int movieId) {
             return MovieVideo.CONTENT_URI
                     .buildUpon().appendPath(Integer.toString(movieId)).appendPath("trailer").build();
+        }
+
+        public static Uri buildTrailerUriByKey(String key) {
+            return MovieVideo.CONTENT_URI
+                    .buildUpon().appendPath(key).appendPath("key").build();
         }
 
     }

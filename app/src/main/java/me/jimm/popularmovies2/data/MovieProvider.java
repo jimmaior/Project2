@@ -23,28 +23,35 @@ public class MovieProvider extends ContentProvider {
     private MovieDbHelper mMovieDbHelper;
 
     // CODES
+
     private static final int MOVIES = 100;
     private static final int MOVIE_BY_ID = 150;
     private static final int MOVIE_BY_MOVIE_ID = 200;
     private static final int MOVIE_FAVORITE = 300;
+    private static final int MOVIES_FAVORITE = 350;
     private static final int MOVIE_REVIEWS_BY_MOVIE_ID = 400;
-    private static final int MOVIE_TRAILER_BY_MOVIE_ID = 500;
+    private static final int MOVIE_TRAILERS_BY_MOVIE_ID = 500;
     private static final int MOVIE_REVIEWS = 600;
     private static final int MOVIE_VIDEO = 700;
+    private static final int MOVIE_TRAILER_BY_KEY = 800;
+    private static final int MOVIE_REVIEW_BY_REVIEW_ID = 900;
 
     private static UriMatcher buildUriMatcher() {
         // returns a specific code depending on which URI is matched.
         final UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
         final String authority = MovieContract.CONTENT_AUTHORITY;
 
-        // codes and their URI'=
+        // Data URIs
         matcher.addURI(authority, MovieContract.PATH_MOVIE, MOVIES);
-        matcher.addURI(authority, MovieContract.PATH_REVIEW, MOVIE_REVIEWS);
-        matcher.addURI(authority, MovieContract.PATH_VIDEO, MOVIE_VIDEO);
+        matcher.addURI(authority, MovieContract.PATH_MOVIE + "/favorite", MOVIES_FAVORITE);
         matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#", MOVIE_BY_MOVIE_ID);
         matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#/favorite", MOVIE_FAVORITE);
+        matcher.addURI(authority, MovieContract.PATH_VIDEO, MOVIE_VIDEO);
+        matcher.addURI(authority, MovieContract.PATH_VIDEO + "/*/trailer", MOVIE_TRAILERS_BY_MOVIE_ID);
+        matcher.addURI(authority, MovieContract.PATH_VIDEO + "/*/key", MOVIE_TRAILER_BY_KEY);
+        matcher.addURI(authority, MovieContract.PATH_REVIEW, MOVIE_REVIEWS);
         matcher.addURI(authority, MovieContract.PATH_REVIEW + "/*/reviews", MOVIE_REVIEWS_BY_MOVIE_ID);
-        matcher.addURI(authority, MovieContract.PATH_VIDEO + "/*/trailer", MOVIE_TRAILER_BY_MOVIE_ID);
+        matcher.addURI(authority, MovieContract.PATH_REVIEW + "/*/review_id", MOVIE_REVIEW_BY_REVIEW_ID);
 
         return matcher;
     }
@@ -73,7 +80,7 @@ public class MovieProvider extends ContentProvider {
             case MOVIE_REVIEWS_BY_MOVIE_ID: {
                 return MovieContract.MovieReview.CONTENT_DIR_TYPE;
             }
-            case MOVIE_TRAILER_BY_MOVIE_ID: {
+            case MOVIE_TRAILERS_BY_MOVIE_ID: {
                 return MovieContract.MovieVideo.CONTENT_ITEM_TYPE;
             }
             case MOVIE_REVIEWS: {
@@ -173,7 +180,7 @@ public class MovieProvider extends ContentProvider {
                 break;
             }
 
-            case MOVIE_TRAILER_BY_MOVIE_ID: {
+            case MOVIE_TRAILERS_BY_MOVIE_ID: {
                 returnCursor = mMovieDbHelper.getReadableDatabase().query(
                         MovieContract.MovieVideo.TABLE_NAME,
                         projection,
@@ -202,7 +209,6 @@ public class MovieProvider extends ContentProvider {
              //   DatabaseUtils.dumpCursor(returnCursor);
                 break;
             }
-
             case MOVIE_REVIEWS: {
                 returnCursor = mMovieDbHelper.getReadableDatabase().query(
                         MovieContract.MovieReview.TABLE_NAME,
@@ -217,7 +223,48 @@ public class MovieProvider extends ContentProvider {
               //  DatabaseUtils.dumpCursor(returnCursor);
                 break;
             }
-
+            case  MOVIES_FAVORITE: {
+                returnCursor = mMovieDbHelper.getReadableDatabase().query(
+                        MovieContract.MovieEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+             //   Log.d(TAG, "query() MOVIE_REVIEW_BY_REVIEW_ID:" + DatabaseUtils.dumpCursorToString(returnCursor));
+             //   DatabaseUtils.dumpCursor(returnCursor);
+                break;
+            }
+            case MOVIE_REVIEW_BY_REVIEW_ID: {
+                returnCursor = mMovieDbHelper.getReadableDatabase().query(
+                        MovieContract.MovieReview.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+                //  Log.d(TAG, "query() MOVIE_REVIEWS:" + DatabaseUtils.dumpCursorToString(returnCursor));
+                //  DatabaseUtils.dumpCursor(returnCursor);
+                break;
+            }
+                case MOVIE_TRAILER_BY_KEY: {
+                    returnCursor = mMovieDbHelper.getReadableDatabase().query(
+                            MovieContract.MovieVideo.TABLE_NAME,
+                            projection,
+                            selection,
+                            selectionArgs,
+                            null,
+                            null,
+                            sortOrder
+                    );
+                    //   Log.d(TAG, "query() MOVIE_TRAILER_BY_ID:" + DatabaseUtils.dumpCursorToString(returnCursor));
+                    //   DatabaseUtils.dumpCursor(returnCursor);
+                    break;
+            }
             default: {
                 // by default, assume a bad URI
                 throw new UnsupportedOperationException("Unknown uri:" + uri);
@@ -334,7 +381,7 @@ public class MovieProvider extends ContentProvider {
                 break;
 
             }
-            case MOVIE_TRAILER_BY_MOVIE_ID: {
+            case MOVIE_TRAILERS_BY_MOVIE_ID: {
                 rowsUpdated = db.update(MovieContract.MovieVideo.TABLE_NAME, values, whereClause, whereArgs);
                 break;
             }
