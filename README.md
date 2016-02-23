@@ -1,7 +1,7 @@
 # Project1
-Project1 submission for the Udacity Android Developer Nanodegree.
+Project2 submission for the Udacity Android Developer Nanodegree.
 
-Project1 is the Popular Movies - Stage 1 app.  The app displays a list of the most popular movies currently appearing on the https://www.themoviedb.org/ web site.  You can scroll through a grid showing a list of the movie posters and you can click on a poster to see detailed information about the move. 
+Project2 is the Popular Movies - Stage 2 app.  The app builds on Project 1 by adding additional features to show Reviews and Trailers for the movies.  It also allows the user to select their favorites and to show them in the grid.  The user can also share the url to the first trailer shown in the detail pane.
 
-In order to use the app, you will need to obtain a key from the website, and add it to your gradle.properties file, as described here https://docs.gradle.org/current/userguide/build_environment.html.
+Finally, the app support a standard phone and table configuration.
 
