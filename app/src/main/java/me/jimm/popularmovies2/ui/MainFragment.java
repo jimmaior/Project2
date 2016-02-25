@@ -33,12 +33,16 @@ public class MainFragment extends Fragment implements
     public static final int MOVIE_FAVORITES_LOADER = 100;
 
     private static final String TAG = MainFragment.class.getSimpleName();
-    private int mPosition = GridView.INVALID_POSITION;
+    private static final String PERSIST_GRID_LIST_POSITION = "grid_list_position";
+    private static final String PERSIST_LOADER_ID = "persist_loader_id";
+
+
+    private int mPosition;
+    private int mCurrentLoader;
 
     private GridView mGridView;
     private MovieListAdapter mMovieListAdapter;
     private ProgressBar mProgressBar;
-    private static final String PERSIST_GRID_LIST_POSITION = "grid_list_position";
 
 
     private static final String[] MOVIE_COLUMNS = {
@@ -86,14 +90,13 @@ public class MainFragment extends Fragment implements
         // Required empty public constructor
     }
 
-
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         Log.d(TAG, "onActivityCreated");
         super.onActivityCreated(savedInstanceState);
 
         // prepare the CursorLoader
-        getLoaderManager().initLoader(MOVIE_LOADER, null, this);
+        getLoaderManager().initLoader(mCurrentLoader, null, this);
 
     }
 
@@ -101,6 +104,22 @@ public class MainFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
+
+        setRetainInstance(true);
+
+        if (savedInstanceState != null) {
+
+            if (savedInstanceState.containsKey(PERSIST_GRID_LIST_POSITION)) {
+                mPosition = savedInstanceState.getInt(PERSIST_GRID_LIST_POSITION);
+            }
+
+            if (savedInstanceState.containsKey(PERSIST_LOADER_ID)) {
+                mCurrentLoader = savedInstanceState.getInt(PERSIST_LOADER_ID);
+            }
+        } else {
+            mPosition = GridView.INVALID_POSITION;
+            mCurrentLoader = MOVIE_LOADER;
+        }
     }
 
     @Override
@@ -120,13 +139,24 @@ public class MainFragment extends Fragment implements
         mGridView.setAdapter(mMovieListAdapter);
         mGridView.setOnItemClickListener(this);
 
-
-        if (savedInstanceState != null && savedInstanceState.containsKey(PERSIST_GRID_LIST_POSITION)) {
-             mPosition = savedInstanceState.getInt(PERSIST_GRID_LIST_POSITION);
-        }
-
         return v;
     }
+
+
+    @Override
+    public void onResume() {
+        Log.d(TAG, "onResume -  mCurrentLoader:" + mCurrentLoader);
+        super.onResume();
+
+        // refresh the current view
+        LoaderManager loaderManager = getLoaderManager();
+        if (loaderManager.getLoader(mCurrentLoader) != null ) {
+            loaderManager.restartLoader(mCurrentLoader, null, this);
+        } else {
+            getLoaderManager().initLoader(mCurrentLoader, null, this);
+        }
+    }
+
 
     public void onSortOrderChanged() {
         Log.d(TAG, "onSortOrderChanged");
@@ -151,6 +181,9 @@ public class MainFragment extends Fragment implements
             bundle.putInt(PERSIST_GRID_LIST_POSITION, mPosition);
         }
 
+        bundle.putInt(PERSIST_LOADER_ID, mCurrentLoader);
+
+
         super.onSaveInstanceState(bundle);
     }
 
@@ -168,7 +201,7 @@ public class MainFragment extends Fragment implements
     }
 
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        Log.d(TAG, "onCreateLoader");
+        Log.d(TAG, "onCreateLoader - id:" + id);
         String sortPreference = Utils.getSortOrderPreference(getActivity());
         String sortOrder = sortPreference + " DESC";
         Uri uri;
@@ -198,7 +231,7 @@ public class MainFragment extends Fragment implements
     }
 
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        Log.d(TAG, "onLoadFinished()");
+        Log.d(TAG, "onLoadFinished() - loader param:" + loader);
         if (data.moveToFirst()) {
             showLoading(true);
             mMovieListAdapter.swapCursor(data);
@@ -224,7 +257,7 @@ public class MainFragment extends Fragment implements
     }
 
     public void onLoaderReset(Loader<Cursor> loader) {
-        Log.d(TAG, "onLoaderReset()");
+        Log.d(TAG, "onLoaderReset() - current loader:" + mCurrentLoader);
         showLoading(true);
         mMovieListAdapter.swapCursor(null);
         showLoading(false);
@@ -233,14 +266,30 @@ public class MainFragment extends Fragment implements
     void getFavoriteMovies( ) {
         Log.d(TAG, "getFavoriteMovies");
         mPosition = mGridView.INVALID_POSITION;
-        getLoaderManager().restartLoader(MOVIE_FAVORITES_LOADER, null, this);
+        mCurrentLoader = MOVIE_FAVORITES_LOADER;
+
+        // Cursor Loader
+        LoaderManager loaderManager = getLoaderManager();
+        if (loaderManager.getLoader(mCurrentLoader) != null ) {
+            loaderManager.restartLoader(mCurrentLoader, null, this);
+        } else {
+            getLoaderManager().initLoader(mCurrentLoader, null, this);
+        }
     }
+
 
     void getAllMovies() {
         Log.d(TAG, "getAllMovies");
          mPosition = mGridView.INVALID_POSITION;
-        getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
-    }
+        mCurrentLoader = MOVIE_LOADER;
+
+        LoaderManager loaderManager = getLoaderManager();
+        if (loaderManager.getLoader(mCurrentLoader) != null ) {
+            loaderManager.restartLoader(mCurrentLoader, null, this);
+        } else {
+            getLoaderManager().initLoader(mCurrentLoader, null, this);
+        }
+     }
 
     private void updateMovieData(Context context, int loadPage) {
         Log.d(TAG, "updateMovieData");
@@ -249,5 +298,12 @@ public class MainFragment extends Fragment implements
         intent.putExtra("page", loadPage);
         intent.putExtra("command", "get_movie_data");
         getActivity().startService(intent);
+
+        LoaderManager loaderManager = getLoaderManager();
+        if (loaderManager.getLoader(mCurrentLoader) != null ) {
+            loaderManager.restartLoader(mCurrentLoader, null, this);
+        } else {
+            getLoaderManager().initLoader(mCurrentLoader, null, this);
+        }
     }
 }

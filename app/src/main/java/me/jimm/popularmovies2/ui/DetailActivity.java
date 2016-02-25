@@ -3,9 +3,11 @@ package me.jimm.popularmovies2.ui;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MenuItem;
 
 import me.jimm.popularmovies2.R;
 import me.jimm.popularmovies2.Utils;
@@ -52,6 +54,25 @@ public class DetailActivity extends AppCompatActivity implements
                     .add(R.id.fragment_detail_container, detailFragment, DETAIL_FRAGMENT_TAG)
                     .commit();
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Log.d(TAG, "onOptionsItemSelected");
+        int itemId = item.getItemId();
+
+        switch (itemId) {
+            case android.R.id.home:
+//                Log.d(TAG, "onOptionItemSelected - home");
+//                Intent intent = NavUtils.navigateUpTo().getParentActivityIntent(this);
+//                NavUtils.navigateUpTo(this, intent);
+                onBackPressed();
+                return true;
+           default: {
+                break;
+            }
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override

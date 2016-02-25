@@ -3,7 +3,6 @@ package me.jimm.popularmovies2.ui;
 
 import android.app.PendingIntent;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -11,8 +10,6 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.GridView;
 
 import me.jimm.popularmovies2.R;
 import me.jimm.popularmovies2.Utils;
@@ -29,7 +26,7 @@ public class MainActivity extends AppCompatActivity implements
     private final String TAG = MainActivity.class.getSimpleName();
     private static final String TAG_DETAIL_FRAGMENT = "TAG_DETAIL_FRAGMENT";
     private static final int DETAIL_REQUEST_CODE = 100;
-    private static final int INIT_DETAIL_REQUEST_CODE = 200;
+    private static final String PERSIST_SORT_ORDER = "current_sort_order";
     private boolean mTwoPane;
     private static String mCurrentSortOrder;
     private int mMovieId;
@@ -46,6 +43,8 @@ public class MainActivity extends AppCompatActivity implements
 
         if (savedInstanceState == null) {
             init();
+        } else {
+            mCurrentSortOrder = savedInstanceState.getString(PERSIST_SORT_ORDER);
         }
 
         // check if the activity is using a layout which will contain two fragments
@@ -64,8 +63,15 @@ public class MainActivity extends AppCompatActivity implements
         }
         else {
             mTwoPane = false;
-
         }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle bundle) {
+        Log.d(TAG, "onSaveInstanceState()");
+        bundle.putString(PERSIST_SORT_ORDER, mCurrentSortOrder);
+
+        super.onSaveInstanceState(bundle);
     }
 
     @Override
@@ -74,6 +80,14 @@ public class MainActivity extends AppCompatActivity implements
 
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (mCurrentSortOrder == null)  {
+            mCurrentSortOrder = Utils.getSortOrderPreference(this);
+        }
     }
 
     @Override
@@ -119,7 +133,7 @@ public class MainActivity extends AppCompatActivity implements
 
             if (mTwoPane) {
                 // show movie details in this activity, by adding/replacing the detail fragment
-				Log.d(TAG, "Show movie details for two pange");
+				Log.d(TAG, "Show movie details for two pane");
                 Bundle args = new Bundle();
                 args.putParcelable(DetailFragment.DETAIL_URI, uri);
             	args.putInt("MOVIE_ID", mMovieId);
@@ -133,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements
                 Intent intent = new Intent(this, DetailActivity.class);
                 intent.putExtra("MOVIE_ID", mMovieId);
                 intent.setData(uri);
-                startActivity(intent);
+                 startActivity(intent);
             }
          } else {
             Log.d(TAG, "onActivityResult: req/res not matching");
@@ -156,7 +170,6 @@ public class MainActivity extends AppCompatActivity implements
             case (R.id.action_movies): {
                 Log.d(TAG, "onOptionItemSelected - Action_Movies");
                 showAllMovies();
-                //init();
                 break;
             }
             case (R.id.action_favorite): {

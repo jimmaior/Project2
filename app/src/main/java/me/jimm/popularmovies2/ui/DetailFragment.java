@@ -1,13 +1,13 @@
 package me.jimm.popularmovies2.ui;
 
 import android.content.Intent;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.app.NavUtils;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
@@ -102,6 +102,10 @@ public class DetailFragment extends Fragment implements
 
         // has Action items on ActionBar
         setHasOptionsMenu(true);
+
+        // Retain this fragment across configuration changes.
+        setRetainInstance(true);
+
     }
 
     @Override
@@ -122,7 +126,7 @@ public class DetailFragment extends Fragment implements
        int itemId = item.getItemId();
 
         switch (itemId) {
-            case (R.id.action_share): {
+             case (R.id.action_share): {
                 Log.d(TAG, "onOptionItemSelected - Action_Share");
                 shareMovieUrl();
             break;
@@ -144,11 +148,18 @@ public class DetailFragment extends Fragment implements
             mMovieId = getArguments().getInt("MOVIE_ID");
             mMovieDtlByMovieIdUri = getArguments().getParcelable(DETAIL_URI);
         } else {
-            mMovieId = 0;
-            mMovieDtlByMovieIdUri = MovieContract.MovieEntry.buildMovieUriByMovieId(mMovieId);
+            if (mMovieId >= 0 ) {
+                mMovieDtlByMovieIdUri = MovieContract.MovieEntry.buildMovieUriByMovieId(mMovieId);
+            }
         }
-        // Loader
-        getLoaderManager().initLoader(MOVIE_DETAIL_LOADER, null, this);
+
+        // Cursor Loader
+        LoaderManager loaderManager = getLoaderManager();
+        if (loaderManager.getLoader(MOVIE_DETAIL_LOADER) != null ) {
+            loaderManager.restartLoader(MOVIE_DETAIL_LOADER, null, this);
+        } else {
+            getLoaderManager().initLoader(MOVIE_DETAIL_LOADER, null, this);
+        }
     }
 
     @Override
@@ -183,6 +194,7 @@ public class DetailFragment extends Fragment implements
         return v;
     }
 
+
     public void updateDetailView(int movieId) {
         Log.d(TAG, "updateDetailView");
         mMovieId = movieId;
@@ -202,14 +214,10 @@ public class DetailFragment extends Fragment implements
 
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
     Log.d(TAG, "onLoadFinished data loaded?:" + data.moveToFirst());
-    Log.d(TAG, "onLoadFinished data column count:" + data.getColumnCount());
-        if (data.getColumnCount() > 0) {
-            Log.d(TAG, "onLoadFinished data column name:" + data.getColumnName(0));
-        }
 
         if (data.moveToFirst()) {
 
-            // Movie Title
+           // Movie Title
             mTvTitle.setText(data.getString(COL_TITLE));
 
             // Poster
@@ -298,6 +306,7 @@ public class DetailFragment extends Fragment implements
 
                         // image button
                         ImageButton playTrailerBtn = new ImageButton(getActivity());
+                        playTrailerBtn.setId(i);
                         RelativeLayout.LayoutParams layoutParams = new
                                 RelativeLayout.LayoutParams(
                                 RelativeLayout.LayoutParams.WRAP_CONTENT,
